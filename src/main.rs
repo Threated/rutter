@@ -1,10 +1,10 @@
 #[macro_use] extern crate rocket;
 extern crate redis;
-use redis::{Commands, Connection, RedisError};
+use redis::{Commands, Connection, RedisResult};
 
 
-fn get_connection() -> Result<Connection, RedisError> {
-    let client = redis::Client::open("redis://127.0.0.1/")?;
+fn get_connection() -> RedisResult<Connection> {
+    let client = redis::Client::open("redis://redis/")?;
     client.get_connection()
 }
 
@@ -24,5 +24,5 @@ fn set(key: String, value: String) -> &'static str {
 }
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![get, set])
+    rocket::build().mount("/", rocket::routes![get, set])
 }

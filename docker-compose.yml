@@ -1,0 +1,18 @@
+version: '2'
+services:
+  redis:
+    build: .
+    ports:
+      - 6379:6379
+  rust:
+    image: "rust:1.59.0"
+    ports:
+      - "8000:8000"
+    # network_mode: "host"
+    volumes:
+      - ./:/rutter
+    environment:
+      - USER=test
+    command: tail -F stinkt
+    # command: sh
+    
