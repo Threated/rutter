@@ -1,18 +1,9 @@
-version: '2'
+version: '3.8'
 services:
   redis:
-    build: .
+    build:
+      context: .
+      dockerfile: ./Dockerfiles/redis.dockerfile
     ports:
       - 6379:6379
-  rust:
-    image: "rust:1.59.0"
-    ports:
-      - "8000:8000"
-    # network_mode: "host"
-    volumes:
-      - ./:/rutter
-    environment:
-      - USER=test
-    command: tail -F stinkt
-    # command: sh
     

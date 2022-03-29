@@ -37,8 +37,9 @@ COPY --from=redisgraph ${LD_LIBRARY_PATH}/redisgraph.so ${LD_LIBRARY_PATH}/
 # ENV PYTHONPATH /usr/lib/redis/modules/deps/cpython/Lib
 
 EXPOSE 6379
+ENTRYPOINT [ "redis-server" ]
 CMD [ \
-    "redis-server", \
+    # "redis-server", \
     # "--loadmodule", "/usr/lib/redis/modules/redisai.so", \
     "--loadmodule", "/usr/lib/redis/modules/redisearch.so", \
     "--loadmodule", "/usr/lib/redis/modules/redisgraph.so" \

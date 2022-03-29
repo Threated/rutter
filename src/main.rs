@@ -4,7 +4,7 @@ use redis::{Commands, Connection, RedisResult};
 
 
 fn get_connection() -> RedisResult<Connection> {
-    let client = redis::Client::open("redis://redis/")?;
+    let client = redis::Client::open("redis://localhost/")?;
     client.get_connection()
 }
 
@@ -13,7 +13,7 @@ fn get(key: String) -> String {
 
     let mut con = get_connection().unwrap();
     
-    format!("Got, {}!", con.get::<_, String>(key).unwrap_or("Nothing".to_owned()))
+    format!("Got, {}!", con.get::<_, String>(key).unwrap_or("Leon ssstinkt".to_owned()))
 }
 
 #[get("/<key>/<value>")]
