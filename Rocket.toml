@@ -1,0 +1,2 @@
+[default.databases.redis]
+url = "redis://localhost/"
