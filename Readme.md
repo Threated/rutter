@@ -11,8 +11,6 @@ cargo run
 ```
 
 To stop:
-```
-docker-compose stop
-```
+`docker-compose stop`
 
 Background with `-d`
