@@ -1,24 +1,17 @@
 mod public;
-use crate::public::*;
-
+mod db;
+mod auth;
+mod types;
+mod user;
+use rocket_db_pools::Database;
 #[macro_use] extern crate rocket;
 
-use rocket_db_pools::{Database, deadpool_redis};
-
-#[derive(Database)]
-#[database("redis")]
-pub struct Db(deadpool_redis::Pool);
-
-
-// fn connect_redis() -> redis::Client {
-//     let client = redis::Client::open("redis://localhost/").unwrap();
-//     // client.get_connection().unwrap()
-//     client
-// }
 
 #[launch]
 fn rocket() -> _ {
     rocket::build()
-        .attach(Db::init())
-        .mount("/", rocket::routes![get, set, index])
+        .attach(db::Db::init())
+        .mount("/", public::routes())
+        .mount("/auth", auth::routes())
+        .mount("/user", user::routes())
 }

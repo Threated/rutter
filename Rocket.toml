@@ -1,2 +1,7 @@
+[default]
+# Change this if anyone wants to deploy this
+secret_key = "++c3jCc4u0ZZswLT1nLUFIEMk3Pf2EjJINOmhDebJ1E="
+
+
 [default.databases.redis]
 url = "redis://localhost/"
