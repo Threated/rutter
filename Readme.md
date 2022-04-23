@@ -6,8 +6,8 @@ cargo
 ## Get started
 
 ``` bash
-docker-compose up -d
-cargo run
+$ docker-compose up -d
+$ cargo run
 ```
 
 To stop:
