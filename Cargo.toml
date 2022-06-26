@@ -6,13 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocket = {version = "0.5.0-rc.1", features= ["json", "secrets"]}
-rocket_db_pools = {version = "0.1.0-rc", features = ["deadpool_redis"]}
+rocket = {version = "0.5.0-rc.2", features= ["json", "secrets"]}
+rocket_db_pools = {version = "0.1.0-rc.2", features = ["deadpool_redis"]}
 serde = "1.0.136"
-redis = "0.21.5"
+redis = { version = "0.21.5", features = ["aio"] }
 argon2 = "0.4.0"
-redis-graph = "0.4.2"
-
-[patch.crates-io]
-rocket = { git = "https://github.com/SergioBenitez/Rocket"}
-rocket_db_pools= {  git = "https://github.com/SergioBenitez/Rocket"}
+uuid = { version = "0.8", features = ["v4"] }
+redisgraphio = { version = "0.1", features=["tokio-comp"] }

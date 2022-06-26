@@ -1,6 +1,8 @@
+#[cfg(test)] mod tests;
 mod public;
 mod db;
 mod auth;
+mod responders;
 mod types;
 mod user;
 use rocket_db_pools::Database;
