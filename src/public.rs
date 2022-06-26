@@ -7,7 +7,7 @@ use crate::db::Redis;
 
 #[get("/")]
 async fn index() -> Option<NamedFile> {
-    NamedFile::open(Path::new("./frontend/index.html")).await.ok()
+    NamedFile::open(Path::new("./dist/index.html")).await.ok()
 }
 
 #[get("/u/<user>")]

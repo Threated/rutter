@@ -3,3 +3,4 @@ todo.txt
 db.txt
 test.rest
 /Dockerfiles/rust.dockerfile
+/static
