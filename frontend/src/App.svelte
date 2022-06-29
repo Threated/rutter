@@ -1,49 +1,42 @@
 <script lang="ts">
-    import viteLogo from "/vite.svg";
-    import svelteLogo from "./assets/svelte.svg";
-    import Counter from "./lib/Counter.svelte";
+    import { Route, Router } from "svelte-navigator";
+    import Home from "./lib/Home.svelte";
+    import Login from "./lib/Login.svelte";
+    import Navbar from "./lib/Navbar.svelte";
+    import Register from "./lib/Register.svelte";
 </script>
 
-<main>
-    <div>
-        <a href="https://vitejs.dev" target="_blank">
-            <img src={viteLogo} class="logo" alt="Vite Logo" />
-        </a>
-        <a href="https://svelte.dev" target="_blank">
-            <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-        </a>
-    </div>
-    <h1>Vite + Svelte + Leon deine Mutter</h1>
-
-    <div class="card">
-        <Counter />
-    </div>
-
-    <p>
-        Check out <a
-            href="https://github.com/sveltejs/kit#readme"
-            target="_blank">SvelteKit</a
-        >, the official Svelte app framework powered by Vite!
-    </p>
-
-    <p class="read-the-docs">
-        Click on the Vite and Svelte logos to learn more
-    </p>
-</main>
+<Router>
+    <main>
+        <div><Navbar/></div>
+        <div class="main">
+            <Route path="/">
+                <Home />
+            </Route>
+            <Route path="login" component={Login} />
+            <Route path="register" component={Register} />
+        </div>
+    </main>
+</Router>
 
 <style>
-    .logo {
-        height: 6em;
-        padding: 1.5em;
-        will-change: filter;
+    main {
+        display: grid;
+        /* grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); */
+        grid-template-columns: 1fr 2fr 1fr;
+        /* grid-template-areas: 
+            ". head ."
+            "side main ."
+            ". footer ."; */
     }
-    .logo:hover {
-        filter: drop-shadow(0 0 2em #646cffaa);
+    .navbar {
+        /* grid-area: side; */
+        border: 3px solid #00f;
     }
-    .logo.svelte:hover {
-        filter: drop-shadow(0 0 2em #ff3e00aa);
-    }
-    .read-the-docs {
-        color: #888;
+    .main {
+        /* display: flex; */
+        /* height: 100vh; */
+        /* grid-area: main; */
+        border: 3px solid #00f;
     }
 </style>

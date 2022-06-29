@@ -68,25 +68,25 @@ async fn login(user: Json<User<'_>>, mut db: Redis, jar: &CookieJar<'_>) -> Json
     let password = db.get_pw_by_name(user.name).await;
     if password.is_some() && user.verify_password(&password.unwrap()) {
         jar.add_private(Cookie::new("session_id", String::from(user.name)));
-        (Status::Ok, "Login Successfull").into()
+        JsonRes::from((Status::Ok, "Login Successfull"))
     } else {
-        (Status::Unauthorized, "Wrong username or password").into()
+        JsonRes::from((Status::Unauthorized, "Wrong username or password"))
     }
 }
 
 #[post("/register", format="json", data="<user>")]
 async fn register(user: Json<User<'_>>, mut db: Redis) -> JsonRes {
     if db.register_user(&user).await {
-        (Status::Created, "Created User").into()
+        JsonRes::from((Status::Created, "Created User"))
     } else {
-        (Status::Conflict, "User already exists").into()
+        JsonRes::from((Status::Conflict, "User already exists"))
     }
 }
 
 #[post("/logout")]
 async fn logout<'a>(jar: &CookieJar<'_>) -> JsonRes {
-    jar.remove_private(Cookie::new("session_id", ""));
-    (Status::ResetContent, "User logged out").into()
+    jar.remove_private(Cookie::named("session_id"));
+    JsonRes::from((Status::ResetContent, "User logged out"))
 }
 
 pub fn routes() -> Vec<rocket::Route> {
