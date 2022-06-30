@@ -14,7 +14,7 @@
                 <Home />
             </Route>
             <Route path="login" component={Login} />
-            <Route path="register" component={Register} />
+            <Route path="signup" component={Register} />
         </div>
     </main>
 </Router>
@@ -28,10 +28,6 @@
             ". head ."
             "side main ."
             ". footer ."; */
-    }
-    .navbar {
-        /* grid-area: side; */
-        border: 3px solid #00f;
     }
     .main {
         /* display: flex; */

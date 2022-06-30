@@ -1,19 +1,16 @@
 <script>
-    import svelteLogo from "../assets/svelte.svg";
-    import Counter from "./Counter.svelte";
-    import viteLogo from "../assets/vite.svg";
+    import { isAuthenticated } from "../store";
+    import { useNavigate } from "svelte-navigator";
+    const navigate = useNavigate();
+    $: if (!$isAuthenticated) {
+        // Replace with cool shit https://svelte.dev/repl/033e824fad0a4e34907666e7196caec4?version=3.48.0
+        navigate("/login");
+        alert("Login befor you can see your Feed");
+    }
 </script>
 
 
 <main>
-    <div>
-        <a href="https://vitejs.dev" target="_blank">
-            <img src={viteLogo} class="logo" alt="Vite Logo" />
-        </a>
-        <a href="https://svelte.dev" target="_blank">
-            <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-        </a>
-    </div>
     <h1>Vite + Svelte + Leon stinkt</h1>
     <h1>Vite + Svelte + Leon stinkt</h1><h1>Vite + Svelte + Leon stinkt</h1><h1>Vite + Svelte + Leon stinkt</h1><h1>Vite + Svelte + Leon stinkt</h1><h1>Vite + Svelte + Leon stinkt</h1><h1>Vite + Svelte + Leon stinkt</h1><h1>Vite + Svelte + Leon stinkt</h1>
 </main>

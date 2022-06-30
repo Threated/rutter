@@ -8,7 +8,7 @@
     let errorMsg: string;
     const handleSubmit = () => {
         let loginFields = { email, password };
-        const endpoint = `localhost:8000/auth/register`;
+        const endpoint = `http://localhost:8000/auth/register`;
         loading = true;
         fetch(endpoint, {
             method: "POST",

@@ -1,14 +1,16 @@
+use std::path::PathBuf;
+
 use crate::{db::Redis, responders::JsonRes};
 use rocket::{
     serde::json::Json,
     http::{
         CookieJar,
         Cookie,
-        Status
+        Status, Header
     },
     request::{FromRequest, Outcome},
     Request,
-    outcome::IntoOutcome
+    outcome::IntoOutcome, Response, response::Responder
 };
 
 use serde::Deserialize;
@@ -89,6 +91,11 @@ async fn logout<'a>(jar: &CookieJar<'_>) -> JsonRes {
     JsonRes::from((Status::ResetContent, "User logged out"))
 }
 
+#[allow(unused_variables)]
+#[options("/<path..>")]
+fn options(path: PathBuf) -> Status {
+    Status::Ok
+}
 pub fn routes() -> Vec<rocket::Route> {
-    routes![register, login, logout]
+    routes![register, login, logout, options]
 }
