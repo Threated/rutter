@@ -33,6 +33,6 @@
         /* display: flex; */
         /* height: 100vh; */
         /* grid-area: main; */
-        border: 3px solid #00f;
+        /* border: 3px solid #00f; */
     }
 </style>

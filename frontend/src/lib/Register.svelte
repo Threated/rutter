@@ -2,15 +2,15 @@
     import { useNavigate } from "svelte-navigator";
     const navigate = useNavigate();
     import { isAuthenticated } from "../store";
-    let email: string;
+    import Input from "./Input.svelte";
+    let name: string;
     let password: string;
     let loading: boolean;
     let errorMsg: string;
     const handleSubmit = () => {
-        let loginFields = { email, password };
-        const endpoint = `http://localhost:8000/auth/register`;
+        let loginFields = { name, password };
         loading = true;
-        fetch(endpoint, {
+        fetch("http://localhost:8000/auth/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -34,31 +34,41 @@
     };
 </script>
 
-<h3>Register</h3>
-<form on:submit|preventDefault={handleSubmit}>
-    <input
-        class="form-field"
-        bind:value={email}
-        type="email"
-        placeholder="Email"
-    />
-    <input
-        class="form-field"
-        bind:value={password}
-        type="password"
-        placeholder="Password"
-    />
-    <button disabled={loading} class="form-field"> Login </button>
-</form>
-{#if errorMsg}
+<div class="login">
+    <h3>Register</h3>
+    <form on:submit|preventDefault={handleSubmit}>
+        <Input
+            bind:value={name}
+            label="Username"
+        />
+        <Input
+            bind:value={password}
+            type="password"
+            label="Password"
+        />
+        <button disabled={loading} class="form-field"> Sgin-up </button>
+    </form>
+    {#if errorMsg}
     <p class="error">Error ❌ {errorMsg}</p>
-{/if}
-<p>
-    Don't have an account?
-    <strong class="link" on:click={() => navigate("/signup")}>Sign up</strong>
-</p>
+    {/if}
+</div>
 
 <style>
+    .login {
+        display: flex;
+        align-content: center;
+        flex-direction: column;
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1em;
+    }
+
     button {
         border-radius: 8px;
         border: 1px solid transparent;
@@ -66,11 +76,12 @@
         font-size: 1em;
         font-weight: 500;
         font-family: inherit;
-        background-color: #1a1a1a;
+        background-color: #4b4848;
         cursor: pointer;
         transition: border-color 0.25s;
     }
     button:hover {
+        color: #646cff;
         border-color: #646cff;
     }
     button:focus,

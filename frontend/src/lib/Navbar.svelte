@@ -25,7 +25,7 @@
             Search
         </NavButton>
     {#if $isAuthenticated}
-        <NavButton to="/" icon={LogoutIcon} extaAction={logout}>
+        <NavButton to={logout} icon={LogoutIcon}>
             Logout
         </NavButton>
     {:else}

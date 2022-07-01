@@ -3,12 +3,18 @@
     const location = useLocation();
     const navigate = useNavigate();
     export let icon;
-    export let to: string;
-    export let extaAction = () => {}
+    export let to: string | (() => void);
+    const onClick = () => {
+        if (typeof to === 'function') {
+            to();
+        } else {
+            navigate(to);
+        }
+    }
     $: width = $location.pathname === to ? 35 : 20;
 </script>
 
-<button on:click={()=>{extaAction(); navigate(to);}}>
+<button on:click={onClick}>
     <svelte:component this={icon} width=2.5rem stroke-width={width}/>
     <slot />
 </button>

@@ -12,8 +12,6 @@
 
 <!-- This design is from https://codepen.io/meodai/pen/rNedxBa -->
 <style>
-    
-    
 .input {
     --color-light: white;
     --color-dark: #212121;
@@ -38,6 +36,7 @@
   transition: transform 120ms ease-in;
   font-weight: bold;
   line-height: 1.2;
+  user-select: none;
 }
 .input__field {
   box-sizing: border-box;

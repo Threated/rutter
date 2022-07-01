@@ -2,17 +2,17 @@
     import { useNavigate } from "svelte-navigator";
     const navigate = useNavigate();
     import { isAuthenticated } from "../store";
-import Input from "./Input.svelte";
+    import Input from "./Input.svelte";
     let name: string;
     let password: string;
     let loading: boolean;
     let errorMsg: string;
     const handleSubmit = () => {
         let loginFields = { name, password };
-        const endpoint = `http://localhost:8000/auth/login`;
         loading = true;
-        fetch(endpoint, {
+        fetch("http://localhost:8000/auth/login", {
             method: "POST",
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json",
             },
@@ -72,10 +72,6 @@ import Input from "./Input.svelte";
         flex-direction: column;
         align-items: flex-start;
         gap: 1em;
-    }
-
-    input {
-
     }
 
     button {

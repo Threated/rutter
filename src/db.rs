@@ -5,7 +5,7 @@ use rocket::{
 };
 use rocket_db_pools::{deadpool_redis, Connection, Database, Pool};
 use uuid::Uuid;
-use redisgraphio::{AsyncGraphCommands, query, GraphQuery, GraphResponse, FromGraphValue, GraphStatistic};
+use redisgraphio::{AsyncGraphCommands, query, GraphQuery, GraphResponse, FromGraphValue, GraphStatistic, Node};
 
 
 use crate::{auth::User, types::Tweet};
@@ -103,7 +103,9 @@ impl Redis {
         self.graph_query(query!("\
             MATCH (u)-[:tweets]->(t:Tweet {id: $id})
             RETURN u.name, t",
-            {"id" => id.to_string()}, true
+            {
+                "id" => id.to_string()
+            }, true
         )).await.ok()?.data.pop()
     }
 
@@ -111,8 +113,30 @@ impl Redis {
         self.graph_query::<()>(query!("\
             MATCH (u:User {name: $user})
             DETACH DELETE u",
-        {"user" => user}
+            {
+                "user" => user
+            }
         )).await.unwrap();
+    }
+
+    pub async fn load_feed(&mut self, user: &str) {
+        self.graph_query::<(Vec<(Node, Node)>,)>(query!("\
+            MATCH (u:User {name: $name})
+            OPTIONAL MATCH (u)-[:tweets]->(yourTweets:Tweet)
+            WHERE NOT (yourTweets)-[:answer]->(:Tweet)
+            OPTIONAL MATCH (u)-[:follows]->(someone:User)-[:tweets]->(someTweets)
+            WHERE NOT (someTweets)-[:answer]->(:Tweet)
+            WITH (collect(someTweets)+collect(yourTweets)) AS alltweets
+            UNWIND alltweets AS tweets
+            WITH tweets AS tweets
+            ORDER BY tweets.published DESC SKIP $skip LIMIT 25
+            RETURN [(u:User)-[:tweets]->(tweets) | [u, tweets]] as t",
+            {
+                "user" => user,
+                "skip" => 0   
+            }, true
+        )).await.unwrap().data.pop();
+        
     }
 
     pub async fn get_user(&mut self, user: &str) -> Option<(String, Vec<Tweet>)> {

@@ -91,11 +91,6 @@ async fn logout<'a>(jar: &CookieJar<'_>) -> JsonRes {
     JsonRes::from((Status::ResetContent, "User logged out"))
 }
 
-#[allow(unused_variables)]
-#[options("/<path..>")]
-fn options(path: PathBuf) -> Status {
-    Status::Ok
-}
 pub fn routes() -> Vec<rocket::Route> {
-    routes![register, login, logout, options]
+    routes![register, login, logout]
 }
