@@ -1,16 +1,14 @@
-use std::path::PathBuf;
-
 use crate::{db::Redis, responders::JsonRes};
 use rocket::{
     serde::json::Json,
     http::{
         CookieJar,
         Cookie,
-        Status, Header
+        Status
     },
     request::{FromRequest, Outcome},
     Request,
-    outcome::IntoOutcome, Response, response::Responder
+    outcome::IntoOutcome
 };
 
 use serde::Deserialize;

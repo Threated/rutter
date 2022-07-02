@@ -1,4 +1,4 @@
-use crate::{auth::Authenticated, db::Redis, responders::JsonRes};
+use crate::{auth::Authenticated, db::Redis, responders::JsonRes, types::Tweet};
 use rocket::{
     http::Status,
     serde::{json::Json, Deserialize},
@@ -62,6 +62,14 @@ async fn answer(tweet: Json<TweetInfo>, user: Authenticated, mut db: Redis) -> J
     }
 }
 
+#[get("/timeline", format = "json")]
+async fn timeline(user: Authenticated, mut db: Redis) -> JsonRes<Vec<Tweet>> {
+    JsonRes((
+        Status::Ok,
+        Json(db.get_timeline(&user.name).await)
+    ))
+}
+
 #[delete("/", format = "json")]
 async fn delete(user: Authenticated, mut db: Redis) -> JsonRes {
     db.delete_user(&user.name).await;
@@ -69,5 +77,5 @@ async fn delete(user: Authenticated, mut db: Redis) -> JsonRes {
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![follow, unfollow, tweet, answer, delete]
+    routes![follow, unfollow, tweet, answer, delete, timeline]
 }
