@@ -53,13 +53,13 @@ pub struct Authenticated {
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for Authenticated {
-    type Error = std::convert::Infallible;
+    type Error = String;
 
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         request.cookies()
             .get_private("session_id")
             .map(|c| Authenticated {name: c.value().to_string()})
-            .or_forward(())
+            .into_outcome((Status::Unauthorized, "Not autherized".to_string()))
     }
 }
 
@@ -68,8 +68,10 @@ async fn login(user: Json<User<'_>>, mut db: Redis, jar: &CookieJar<'_>) -> Json
     let password = db.get_pw_by_name(user.name).await;
     if password.is_some() && user.verify_password(&password.unwrap()) {
         jar.add_private(Cookie::new("session_id", String::from(user.name)));
+        jar.add(Cookie::new("isAuthenticated", "1"));
         JsonRes::from((Status::Ok, "Login Successfull"))
     } else {
+        jar.add(Cookie::new("isAuthenticated", "0"));
         JsonRes::from((Status::Unauthorized, "Wrong username or password"))
     }
 }
@@ -86,6 +88,7 @@ async fn register(user: Json<User<'_>>, mut db: Redis) -> JsonRes {
 #[post("/logout")]
 async fn logout<'a>(jar: &CookieJar<'_>) -> JsonRes {
     jar.remove_private(Cookie::named("session_id"));
+    jar.add(Cookie::new("isAuthenticated", "0"));
     JsonRes::from((Status::ResetContent, "User logged out"))
 }
 

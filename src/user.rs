@@ -31,10 +31,9 @@ async fn unfollow(unfollow: Json<Follow>, user: Authenticated, mut db: Redis) ->
 }
 
 #[post("/tweet", format = "json", data = "<tweet>")]
-async fn tweet(tweet: Json<TweetInfo>, user: Authenticated, mut db: Redis) -> JsonRes {
+async fn tweet(tweet: Json<TweetInfo>, user: Authenticated, mut db: Redis) -> JsonRes<Tweet> {
     let tweet = &*tweet.content;
-    db.tweet(&user.name, tweet).await;
-    JsonRes::from(format!("{} tweeted {}", user.name, tweet))
+    JsonRes((Status::Ok, Json(db.tweet(&user.name, tweet).await)))
 }
 
 #[post("/answer", format = "json", data = "<tweet>")]

@@ -18,7 +18,6 @@
             body: JSON.stringify(loginFields),
         })
             .then((response) => {
-                console.log(response);
                 if (response.status === 201) {
                     navigate("/login");
                     response.json().then((data) => alert(data.message));
@@ -40,11 +39,13 @@
         <Input
             bind:value={name}
             label="Username"
+            autocomplete="username"
         />
         <Input
             bind:value={password}
             type="password"
             label="Password"
+            autocomplete="new-password"
         />
         <button disabled={loading} class="form-field"> Sgin-up </button>
     </form>

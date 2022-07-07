@@ -5,6 +5,7 @@ mod auth;
 mod responders;
 mod types;
 mod user;
+mod catcher;
 
 use rocket::fs::FileServer;
 use rocket_cors::AllowedOrigins;
@@ -17,7 +18,7 @@ use rocket_db_pools::Database;
 #[launch]
 fn rocket() -> _ {
     let cors = rocket_cors::CorsOptions {
-        allowed_origins: AllowedOrigins::some_exact(&["http://localhost:8000", "http://localhost:3000"]),
+        allowed_origins: AllowedOrigins::some_exact(&["http://127.0.0.1:8000", "http://localhost:3000"]),
         allow_credentials: true,
         ..Default::default()
     }.to_cors().unwrap();
@@ -25,6 +26,7 @@ fn rocket() -> _ {
     rocket::build()
         .attach(db::Db::init())
         .attach(cors)
+        .register("/", catcher::catchers())
         .mount("/", FileServer::from("static/"))
         .mount("/auth", auth::routes())
         .mount("/user", user::routes())

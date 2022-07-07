@@ -76,12 +76,19 @@ impl Redis {
         )).await.unwrap();
     }
 
-    pub async fn tweet(&mut self, user: &str, tweet: &str) {
-        self.graph_query::<()>(query!("\
+    pub async fn tweet(&mut self, user: &str, tweet: &str) -> Tweet {
+        self.graph_query::<Tweet>(query!("\
             MATCH (u:User {name: $user})
-            CREATE (u)-[:tweets]->(:Tweet {content: $tweet, published: timestamp(), id: $id, likes: 0})",
+            CREATE (u)-[:tweets]->(t:Tweet {content: $tweet, published: timestamp(), id: $id, likes: 0})
+            RETURN u, t
+            ",
             {"user" => user, "tweet" => tweet, "id" => Uuid::new_v4().to_string()}
-        )).await.unwrap();
+        ))
+        .await
+        .expect("Database not running")
+        .data
+        .pop()
+        .expect("User not in db")
     }
 
     pub async fn answer_tweet(&mut self, user: &str, answer: &str, answer_to: Uuid) -> bool{
@@ -119,18 +126,19 @@ impl Redis {
         )).await.unwrap();
     }
 
+    /// MATCH (u:User {name: "test"}) OPTIONAL MATCH (u)-[:tweets]->(yourTweets:Tweet) WHERE NOT (yourTweets)-[:answer]->(:Tweet) OPTIONAL MATCH (u)-[:follows]->(someone:User)-[:tweets]->(someTweets) WHERE NOT (someTweets)-[:answer]->(:Tweet) WITH (collect(someTweets)+collect(yourTweets)) AS alltweets UNWIND alltweets AS tweets WITH tweets AS tweets ORDER BY tweets.published DESC SKIP 0 LIMIT 25 RETURN [(u:User)-[:tweets]->(tweets) | [u, tweets]] as t
     pub async fn get_timeline(&mut self, user: &str) -> Vec<Tweet> {
-        self.graph_query::<(Vec<Tweet>,)>(query!("\
+        self.graph_query::<Tweet>(query!("\
             MATCH (u:User {name: $name})
             OPTIONAL MATCH (u)-[:tweets]->(yourTweets:Tweet)
             WHERE NOT (yourTweets)-[:answer]->(:Tweet)
             OPTIONAL MATCH (u)-[:follows]->(someone:User)-[:tweets]->(someTweets)
             WHERE NOT (someTweets)-[:answer]->(:Tweet)
-            WITH (collect(someTweets)+collect(yourTweets)) AS alltweets
-            UNWIND alltweets AS tweets
-            WITH tweets AS tweets
-            ORDER BY tweets.published DESC SKIP $skip LIMIT 25
-            RETURN [(u:User)-[:tweets]->(tweets) | [u, tweets]] as t",
+            WITH (collect(someTweets)+collect(yourTweets)) AS tweets
+            Unwind tweets as tweet
+            MATCH (u:User)-[:tweets]->(tweet)
+            Return u, tweet
+            ORDER BY tweet.published DESC SKIP $skip LIMIT 25",
             {
                 "name" => user,
                 "skip" => 0   
@@ -139,9 +147,6 @@ impl Redis {
         .await
         .unwrap()
         .data
-        .pop()
-        .expect(&format!("No user named {user}"))
-        .0
     }
 
     pub async fn get_user(&mut self, user: &str) -> Option<(String, Vec<Tweet>)> {

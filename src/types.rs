@@ -1,14 +1,14 @@
 use redisgraphio::{FromGraphValue, GraphValue, from_graph_value, Node, PropertyAccess};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct User {
     name: String,
     follows: u32,
     follower: u32
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Tweet {
     author: User,
     content: String,

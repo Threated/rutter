@@ -1,5 +1,9 @@
 <script lang="ts">
+import { createEventDispatcher } from "svelte";
+
+
     let content: string;
+    const dispatch = createEventDispatcher();
     const sendTweet = () => {
         fetch("http://localhost:8000/user/tweet", {
             method: "POST",
@@ -9,15 +13,16 @@
             },
             body: JSON.stringify({ content })
         }).then((response) => {
-                console.log(response);
-                if (response.status === 201) {
-                    response.json().then((data) => alert(data.message));
-                } else {
-                    response.json().then((data) => {
-                        console.log(response.status, data);
-                    });
-                }
-            })
+            console.log(response);
+            if (response.status === 200) {
+                response.json().then((tweet) => dispatch("tweet", {tweet}));
+                content = "";
+            } else {
+                response.json().then((data) => {
+                    console.log(response.status, data);
+                });
+            }
+        })
     }
 </script>
 

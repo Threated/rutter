@@ -19,13 +19,11 @@
             body: JSON.stringify(loginFields),
         })
             .then((response) => {
-                console.log(response);
-                if (response.status === 200) {
+                if (response.ok) {
                     isAuthenticated.set(true);
                     navigate("/");
                 } else {
                     response.json().then((data) => {
-                        console.log(data);
                         errorMsg = data.message;
                     });
                 }
@@ -41,11 +39,13 @@
         <Input
             bind:value={name}
             label="Username"
+            autocomplete="username"
         />
         <Input
             bind:value={password}
             type="password"
             label="Password"
+            autocomplete="current-password"
         />
         <button disabled={loading} class="form-field"> Login </button>
     </form>

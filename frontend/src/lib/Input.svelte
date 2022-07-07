@@ -1,12 +1,13 @@
 <script lang="ts">
     export let value: string;
     export let label: string;
+    export let autocomplete: string = "off";
     export let type: string = "text";
     const setType = () => {return {type: type}}
 </script>
 
 <label class="input">
-    <input class="input__field" {...setType()} placeholder=" " bind:value={value}/>
+    <input class="input__field" {...setType()} placeholder=" " {autocomplete} bind:value={value}/>
     <span class="input__label">{label}</span>
 </label>
 

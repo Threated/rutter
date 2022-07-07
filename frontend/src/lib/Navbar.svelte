@@ -9,6 +9,7 @@
         isAuthenticated.set(false);
         fetch("http://localhost:8000/auth/logout", {
             method: "POST",
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json",
             }
@@ -39,6 +40,8 @@
 <style>
     nav {
         display: flex;
+        position: sticky;
+        top: 0;
         justify-content: right;
         margin-right: 2rem;
     }
