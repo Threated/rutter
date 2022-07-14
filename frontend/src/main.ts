@@ -1,6 +1,5 @@
 import './app.css'
 import App from './App.svelte'
-import { isAuthenticated } from './store'
 
 export function readCookie(name: string): string | null {
     var nameEQ = name + "=";
@@ -17,13 +16,4 @@ const app = new App({
   target: document.getElementById('app')
 })
 
-
-if (readCookie("session_id")) {
-    console.log("asdfsdfasdfasdfasdfadsfasdfasdfasdfasdfsdfaf")
-    isAuthenticated.set(true)
-}
-
-// https://github.com/LoginRadius/engineering-blog-samples/tree/master/Svelte/SvelteAuthApp/src
-
 export default app
-

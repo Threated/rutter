@@ -4,3 +4,4 @@ db.txt
 test.rest
 /Dockerfiles/rust.dockerfile
 /static
+/run
