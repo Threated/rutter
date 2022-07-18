@@ -5,7 +5,6 @@ mod auth;
 mod responders;
 mod types;
 mod user;
-mod catcher;
 
 use rocket::fs::FileServer;
 use rocket_cors::AllowedOrigins;
@@ -26,7 +25,6 @@ fn rocket() -> _ {
     rocket::build()
         .attach(db::Db::init())
         .attach(cors)
-        .register("/", catcher::catchers())
         .mount("/", FileServer::from("static/"))
         .mount("/auth", auth::routes())
         .mount("/user", user::routes())
