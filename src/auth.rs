@@ -65,12 +65,15 @@ impl<'r> FromRequest<'r> for Authenticated {
     type Error = String;
 
     async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        request.headers()
+        let res = request.headers()
             .get("Authorization")
-            .nth(0).and_then(|jwt| dbg!(jwt.split_once("Bearer ").map(|(_, jwt)| jwt)))
-            .and_then(|jwt| dbg!(decode::<Claims>(jwt, &DecodingKey::from_secret(rocket::Config::SECRET_KEY.as_ref()), &Validation::default())).ok())
-            .map(|token| Authenticated {name: token.claims.name})
-            .or_forward(())
+            .nth(0).and_then(|jwt| jwt.split_once("Bearer ").map(|(_, jwt)| jwt))
+            .and_then(|jwt| decode::<Claims>(jwt, &DecodingKey::from_secret(rocket::Config::SECRET_KEY.as_ref()), &Validation::default()).ok())
+            .map(|token| Authenticated {name: token.claims.name});
+        if res.is_none() {
+            request.cookies().remove(Cookie::named("jwt"));
+        }
+        res.or_forward(())
     }
 }
 

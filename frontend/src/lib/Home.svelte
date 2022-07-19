@@ -4,6 +4,7 @@
     import SendTweet from "./SendTweet.svelte";
     import TweetStream from "./TweetStream.svelte";
     import type { Tweet } from "src/types";
+    import { auth_fetch } from "src/main";
     const navigate = useNavigate();
     $: if (!$isAuthenticated) {
         // Replace with cool shit https://svelte.dev/repl/033e824fad0a4e34907666e7196caec4?version=3.48.0
@@ -12,12 +13,8 @@
     }
     let tweets: Tweet[] = [];
     async function timeline() {
-        const res = await fetch("http://localhost:8000/user/timeline", {
+        const res = await auth_fetch("http://localhost:8000/user/timeline", {
             method: "GET",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            }
         });
         if (res.ok) {
             tweets = await res.json();

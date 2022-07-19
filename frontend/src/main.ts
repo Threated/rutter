@@ -12,6 +12,15 @@ export function readCookie(name: string): string | null {
     return null;
 }
 
+export function auth_fetch(url: string, options: RequestInit) {
+    options.headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${readCookie("jwt")}`,
+        ...options.headers
+    };
+    return fetch(url, options)
+}
+
 const app = new App({
   target: document.getElementById('app')
 })
