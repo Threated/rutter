@@ -33,6 +33,10 @@
         /* display: flex; */
         /* height: 100vh; */
         /* grid-area: main; */
-        /* border: 3px solid #00f; */
+        border: 1px solid rgb(128, 128, 128);
+        border-top: 0;
+        border-bottom: 0;
+        /* padding: .5rem 2rem; */
+        /* padding-top: .5rem; */
     }
 </style>

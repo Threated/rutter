@@ -3,7 +3,8 @@
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
-    --color-background: black;
+  --color-background: black;
+  --color-blue: rgb(29, 155, 240);
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: var(--color-background);
@@ -18,7 +19,9 @@
 :focus {
     outline: gray;
 }
-
+body {
+    margin: 0;
+}
 
 @media (prefers-color-scheme: light) {
   :root {

@@ -75,19 +75,17 @@
     }
 
     button {
-        border-radius: 8px;
+        border-radius: 2rem;
         border: 1px solid transparent;
         padding: 0.6em 1.2em;
         font-size: 1em;
         font-weight: 500;
         font-family: inherit;
-        background-color: #4b4848;
-        cursor: pointer;
+        background-color: var(--color-blue);
         transition: border-color 0.25s;
     }
     button:hover {
-        color: #646cff;
-        border-color: #646cff;
+        filter: brightness(85%);
     }
     button:focus,
     button:focus-visible {

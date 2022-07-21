@@ -9,5 +9,8 @@ export type Tweet = {
     content: string,
     published: number,
     id: string,
-    likes: number
+    likes: number,
+    liked: boolean,
+    retweeted: boolean,
+    replies: number
 }

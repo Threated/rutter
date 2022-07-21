@@ -1,4 +1,4 @@
-use redis::RedisResult;
+use redis::{RedisResult, from_redis_value};
 use rocket::{
     request::{FromRequest, Outcome},
     Request
@@ -80,7 +80,7 @@ impl Redis {
         self.graph_query::<Tweet>(query!("\
             MATCH (u:User {name: $user})
             CREATE (u)-[:tweets]->(t:Tweet {content: $tweet, published: timestamp(), id: $id, likes: 0})
-            RETURN u, t
+            RETURN u, t, false, false
             ",
             {"user" => user, "tweet" => tweet, "id" => Uuid::new_v4().to_string()}
         ))
@@ -91,14 +91,14 @@ impl Redis {
         .expect("User not in db")
     }
 
-    pub async fn answer_tweet(&mut self, user: &str, answer: &str, answer_to: Uuid) -> bool{
+    pub async fn answer_tweet(&mut self, user: &str, answer: &str, answer_to: &str) -> bool{
         let res = self.graph_query::<()>(query!("\
             MATCH (u:User {name: $user}), (t:Tweet)
             WHERE t.id = $answer_to
             CREATE (u)-[:tweets]->(:Tweet {content: $tweet, published: timestamp(), id: $id, likes: 0})<-[:answer]-(t)",
             {
                 "answer_to" => answer_to.to_string(),
-                "id" => Uuid::new_v4().to_string(),
+                "id" => answer_to,
                 "answer" => answer,
                 "user" => user
             }
@@ -106,10 +106,60 @@ impl Redis {
         res.get_statistic(GraphStatistic::NodesCreated) == Some(1.0)
     }
 
+    pub async fn retweet(&mut self, user: &str, tweetid: &str) -> bool {
+        self.graph_query::<()>(query!("\
+            MATCH (u:User {name: $user})
+            MATCH (t:Tweet {id: $id})
+            MERGE (u)-[:retweets]->(t)",
+            {
+                "id" => tweetid,
+                "user" => user
+            }
+        )).await.unwrap().get_statistic(GraphStatistic::RelationshipsCreated) == Some(1.0)
+    }
+    pub async fn unretweet(&mut self, user: &str, tweetid: &str) -> bool {
+        self.graph_query::<()>(query!("\
+            MATCH (:User {name: $user})-[r:retweets]->(:Tweet {id: $id})
+            DELETE r",
+            {
+                "id" => tweetid,
+                "user" => user
+            }
+        )).await.unwrap().get_statistic(GraphStatistic::RelationshipsDeleted) == Some(1.0)
+    }
+
+    pub async fn like(&mut self, user: &str, tweetid: &str) -> bool {
+        self.graph_query::<()>(query!("\
+            MATCH (u:User {name: $user})
+            MATCH (t:Tweet {id: $id})
+            MERGE (u)-[:likes]->(t)
+            ON CREATE SET t.likes = t.likes+1",
+            {
+                "id" => tweetid,
+                "user" => user
+            }
+        )).await.unwrap().get_statistic(GraphStatistic::RelationshipsCreated) == Some(1.0)
+    }
+    
+    pub async fn unlike(&mut self, user: &str, tweetid: &str) -> bool {
+        self.graph_query::<()>(query!("\
+            MATCH (:User {name: $user})-[l:likes]->(t:Tweet {id: $id})
+            SET t.likes = t.likes-1
+            DELETE l",
+            {
+                "id" => tweetid,
+                "user" => user
+            }
+        )).await.unwrap().get_statistic(GraphStatistic::RelationshipsDeleted) == Some(1.0)
+    }
+
+    
     pub async fn get_tweet_by_id(&mut self, id: Uuid) -> Option<Tweet> {
+        todo!("Redo should get answers to tweet");
         self.graph_query(query!("\
             MATCH (u)-[:tweets]->(t:Tweet {id: $id})
-            RETURN u, t",
+            OPTIONAL MATCH p=(u)-[:likes]->(tweet)
+            RETURN u, t, exists(p)",
             {
                 "id" => id.to_string()
             }, true
@@ -134,14 +184,17 @@ impl Redis {
             WHERE NOT (yourTweets)-[:answer]->(:Tweet)
             OPTIONAL MATCH (u)-[:follows]->(someone:User)-[:tweets]->(someTweets)
             WHERE NOT (someTweets)-[:answer]->(:Tweet)
-            WITH (collect(someTweets)+collect(yourTweets)) AS tweets
+            WITH u, (collect(someTweets)+collect(yourTweets)) AS tweets
             Unwind tweets as tweet
-            MATCH (u:User)-[:tweets]->(tweet)
-            Return u, tweet
+            MATCH (o:User)-[:tweets]->(tweet)
+            OPTIONAL MATCH p=(u)-[:likes]->(tweet)
+            OPTIONAL MATCH q=(u)-[:retweets]->(tweet)
+            OPTIONAL MATCH (:Tweet)-[answers:answer]->(tweet)
+            Return o, tweet, exists(p), exists(q), count(answers)
             ORDER BY tweet.published DESC SKIP $skip LIMIT 25",
             {
                 "name" => user,
-                "skip" => 0   
+                "skip" => 0
             }, true
         ))
         .await

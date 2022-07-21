@@ -17,6 +17,12 @@ impl From<(Status, &str)> for JsonRes {
     }
 }
 
+impl From<(Status, Value)> for JsonRes {
+    fn from((status, val): (Status, Value)) -> Self {
+        JsonRes((status, Json(val)))
+    }
+}
+
 impl From<&str> for JsonRes {
     fn from(msg: &str) -> Self {
         JsonRes((Status::Ok, Json(json!({
