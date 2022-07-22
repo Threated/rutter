@@ -1,5 +1,4 @@
 #[cfg(test)] mod tests;
-mod public;
 mod db;
 mod auth;
 mod responders;
@@ -10,7 +9,6 @@ use rocket::fs::FileServer;
 use rocket_cors::AllowedOrigins;
 use rocket_db_pools::Database;
 #[macro_use] extern crate rocket;
-
 
 
 

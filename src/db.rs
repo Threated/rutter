@@ -1,4 +1,4 @@
-use redis::{RedisResult, from_redis_value};
+use redis::RedisResult;
 use rocket::{
     request::{FromRequest, Outcome},
     Request
@@ -80,7 +80,7 @@ impl Redis {
         self.graph_query::<Tweet>(query!("\
             MATCH (u:User {name: $user})
             CREATE (u)-[:tweets]->(t:Tweet {content: $tweet, published: timestamp(), id: $id, likes: 0})
-            RETURN u, t, false, false
+            RETURN u, t, false, false, 0
             ",
             {"user" => user, "tweet" => tweet, "id" => Uuid::new_v4().to_string()}
         ))
@@ -154,16 +154,22 @@ impl Redis {
     }
 
     
-    pub async fn get_tweet_by_id(&mut self, id: Uuid) -> Option<Tweet> {
-        todo!("Redo should get answers to tweet");
+    pub async fn get_answers(&mut self, id: &str, user: &str) -> Vec<Tweet> {
         self.graph_query(query!("\
-            MATCH (u)-[:tweets]->(t:Tweet {id: $id})
+            MATCH (t:Tweet {id: $id})
+            OPTIONAL MATCH (t)<-[:answer]-(tweets:Tweet)
+            UNWIND tweets AS tweet
+            MATCH (o:User)-[:tweets]->(tweet)
+            OPTIONAL MATCH (u:User {name: $user})
             OPTIONAL MATCH p=(u)-[:likes]->(tweet)
-            RETURN u, t, exists(p)",
+            OPTIONAL MATCH q=(u)-[:retweets]->(tweet)
+            OPTIONAL MATCH (:Tweet)-[answers:answer]->(tweet)
+            Return o, tweet, exists(p), exists(q), count(answers)",
             {
-                "id" => id.to_string()
+                "id" => id,
+                "user" => user
             }, true
-        )).await.ok()?.data.pop()
+        )).await.unwrap().data
     }
 
     pub async fn delete_user(&mut self, user: &str) {

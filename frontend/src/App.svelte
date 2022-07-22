@@ -2,21 +2,24 @@
     import { Route, Router } from "svelte-navigator";
     import Home from "./lib/Home.svelte";
     import Login from "./lib/Login.svelte";
+    import Modal from "./lib/Modal.svelte";
     import Navbar from "./lib/Navbar.svelte";
     import Register from "./lib/Register.svelte";
 </script>
 
 <Router>
-    <main>
-        <div><Navbar/></div>
-        <div class="main">
-            <Route path="/">
-                <Home />
-            </Route>
-            <Route path="login" component={Login} />
-            <Route path="signup" component={Register} />
-        </div>
-    </main>
+    <Modal modalName="answer">
+        <main>
+            <div><Navbar/></div>
+            <div class="main">
+                <Route path="/">
+                    <Home />
+                </Route>
+                <Route path="login" component={Login} />
+                <Route path="signup" component={Register} />
+            </div>
+        </main>
+    </Modal>
 </Router>
 
 <style>

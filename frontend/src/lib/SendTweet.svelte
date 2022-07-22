@@ -1,15 +1,15 @@
 <script lang="ts">
     import { auth_fetch } from "../main";
     import { createEventDispatcher } from "svelte";
-    let content: string = "";
+    export let content: string = "";
+    export let placeholder = "Tweet here..."
+    export let sender = () => auth_fetch("http://localhost:8000/user/tweet", {
+        method: "POST",
+        body: JSON.stringify({ content }),
+    });
     const dispatch = createEventDispatcher();
     const sendTweet = () => {
-        auth_fetch("http://localhost:8000/user/tweet", {
-            method: "POST",
-            body: JSON.stringify({ content }),
-        }).then((response) => {
-        
-            console.log(response);
+        sender().then((response) => {
             if (response.status === 200) {
                 response.json().then((tweet) => dispatch("tweet", { tweet }));
                 content = "";
@@ -25,7 +25,7 @@
 <div class="container">
     <div class="input">
         <pre aria-hidden="true">{content + "\n"}</pre>
-        <textarea bind:value={content} placeholder="Tweet here..." />
+        <textarea bind:value={content} {placeholder} />
     </div>
     <button on:click={sendTweet}>Rutter</button>
 </div>

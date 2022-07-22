@@ -5,6 +5,8 @@
     import ShareIcon from "../assets/ion-icons/share.svg";
     import AnswersIcon from "../assets/ion-icons/answers.svg";
     import { auth_fetch } from "../main";
+import { getContext } from "svelte";
+import Answer from "./Answer.svelte";
     export let tweet: Tweet;
     export const iconWidth = "1.7rem";
     const formatDate = (date: number) => {
@@ -70,6 +72,7 @@
             tweet.retweeted = !json.success
         }
     }
+    const { open } = getContext("answer");
 </script>
 
 <div class="tweet">
@@ -81,7 +84,7 @@
     </div>
     <p>{tweet.content}</p>
     <div class="icons">
-        <div class="icon answer">
+        <div class="icon answer" on:click={() => open(Answer, {tweet})}>
             <AnswersIcon width={iconWidth} />
             {tweet.replies > 0 ? tweet.replies : ""}
         </div>
