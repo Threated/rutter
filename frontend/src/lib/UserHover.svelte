@@ -8,7 +8,6 @@
 </script>
 
 {#if isHovered || selfHoverd}
-<!-- svelte-ignore a11y-mouse-events-have-key-events -->
 <div class="user" on:mouseenter={() => selfHoverd = true} on:mouseleave={() => selfHoverd = false}>
     <h3>{user.name}</h3>
 </div>

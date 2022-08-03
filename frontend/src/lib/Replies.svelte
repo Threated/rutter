@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { auth_fetch } from "../main";
+    import { auth_fetch } from "../util";
     import { viewedTweet } from "../store";
     import Tweet from "./Tweet.svelte";
     import type { Tweet as TweetT } from "../types";
@@ -27,14 +27,14 @@
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-            }
+            },
         });
         if (res.ok) {
             tweet.set(await res.json());
         } else {
             notFound = true;
         }
-    }
+    };
     if (!$tweet) {
         tweet.set({
             author: { name: "...", follower: "...", follows: "..." },
@@ -46,17 +46,17 @@
             likes: 0,
             replies: 0,
             liked: false,
-            retweeted: false
+            retweeted: false,
         });
         getTweet($params.id);
     }
 </script>
 
 <div class="currentTweet">
-    {#if notFound}    
-    <h1>Can not find with id {$tweet.id}</h1>
+    {#if notFound}
+        <h1>Can not find with id {$tweet.id}</h1>
     {:else}
-    <Tweet tweet={$tweet}/>
+        <Tweet tweet={$tweet} />
     {/if}
 </div>
 {#await userReplies()}
@@ -69,6 +69,5 @@
 
 <style>
     .currentTweet {
-
     }
 </style>

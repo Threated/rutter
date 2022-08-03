@@ -1,5 +1,5 @@
 import {writable} from "svelte/store";
-import { readCookie } from "./main";
+import { readCookie } from "./util";
 import type { Tweet, User } from "./types";
 
 

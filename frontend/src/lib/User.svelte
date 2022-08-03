@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { auth_fetch } from "../main";
+    import { auth_fetch } from "../util";
     import { viewedUser } from "../store";
     import Tweet from "./Tweet.svelte";
     import type { Tweet as TweetT } from "../types";

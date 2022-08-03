@@ -4,7 +4,7 @@
     import SendTweet from "./SendTweet.svelte";
     import Tweet from "./Tweet.svelte";
     import type { Tweet as TweetT } from "../types";
-    import { auth_fetch } from "../main";
+    import { auth_fetch } from "../util";
     $: if (!$isAuthenticated) {
         // Replace with cool shit https://svelte.dev/repl/033e824fad0a4e34907666e7196caec4?version=3.48.0
         navigate("/login");
@@ -19,26 +19,27 @@
             tweets = await res.json();
             // console.log(tweets);
         } else {
-            throw new Error(
-                (await res.json()).message
-            )
+            throw new Error((await res.json()).message);
         }
     }
 </script>
 
-
 <main>
     <div>
         <h1>New Tweets</h1>
-        <SendTweet on:tweet={(event) => {tweets = [event.detail.tweet, ...tweets]}} />
+        <SendTweet
+            on:tweet={(event) => {
+                tweets = [event.detail.tweet, ...tweets];
+            }}
+        />
     </div>
-{#await timeline()}
-    <h3>Loading timeline...</h3>
-{:then} 
-    {#each tweets as tweet}
-        <Tweet {tweet}/>    
-    {/each}
-{/await}
+    {#await timeline()}
+        <h3>Loading timeline...</h3>
+    {:then}
+        {#each tweets as tweet}
+            <Tweet {tweet} />
+        {/each}
+    {/await}
 </main>
 
 <style>

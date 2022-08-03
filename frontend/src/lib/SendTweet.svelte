@@ -1,12 +1,13 @@
 <script lang="ts">
-    import { auth_fetch } from "../main";
+    import { auth_fetch } from "../util";
     import { createEventDispatcher } from "svelte";
     export let content: string = "";
-    export let placeholder = "Tweet here..."
-    export let sender = () => auth_fetch("http://localhost:8000/user/tweet", {
-        method: "POST",
-        body: JSON.stringify({ content }),
-    });
+    export let placeholder = "Tweet here...";
+    export let sender = () =>
+        auth_fetch("http://localhost:8000/user/tweet", {
+            method: "POST",
+            body: JSON.stringify({ content }),
+        });
     const dispatch = createEventDispatcher();
     const sendTweet = () => {
         sender().then((response) => {
@@ -30,7 +31,6 @@
     <button on:click={sendTweet}>Rutter</button>
 </div>
 
-
 <style>
     .container {
         display: flex;
@@ -45,14 +45,15 @@
     pre {
         margin: 0;
     }
-    pre, textarea {
+    pre,
+    textarea {
         background-color: var(--color-background);
         font-family: inherit;
         font-size: 1rem;
         line-height: 1.2;
         box-sizing: border-box;
         overflow: hidden;
-        padding: .3rem;
+        padding: 0.3rem;
     }
     textarea {
         position: absolute;
@@ -61,7 +62,7 @@
         border: 0;
         /* border-radius: .5rem; */
         width: 100%;
-		height: 100%;
+        height: 100%;
     }
     button {
         border-radius: 2rem;
