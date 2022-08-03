@@ -11,7 +11,6 @@
         props = propertys
     }
     function handlekeydown(event: KeyboardEvent) {
-        console.log(event.key)
         if (component && event.key === 'Escape') {
             event.preventDefault();
             close();
@@ -19,7 +18,7 @@
     }
     
     export let modalName: string;
-    setContext(modalName, {open: open, close: close})
+    setContext(modalName, {open, close})
 </script>
 
 <svelte:window on:keydown={handlekeydown} />
@@ -47,7 +46,7 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
-		background: #1d9bf029;
+		background: rgba(91, 112, 131, 0.4);
 		display: flex;
 		align-items: center;
 		justify-content: center;

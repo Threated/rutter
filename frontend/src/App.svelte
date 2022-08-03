@@ -5,6 +5,8 @@
     import Modal from "./lib/Modal.svelte";
     import Navbar from "./lib/Navbar.svelte";
     import Register from "./lib/Register.svelte";
+    import Replies from "./lib/Replies.svelte";
+    import User from "./lib/User.svelte";
 </script>
 
 <Router>
@@ -15,6 +17,8 @@
                 <Route path="/">
                     <Home />
                 </Route>
+                <Route path="u/:user" component={User} />
+                <Route path="t/:id" component={Replies} />
                 <Route path="login" component={Login} />
                 <Route path="signup" component={Register} />
             </div>

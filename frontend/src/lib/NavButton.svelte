@@ -1,7 +1,6 @@
 <script lang="ts">
-    import { useLocation, useNavigate } from "svelte-navigator";
+    import { useLocation, navigate } from "svelte-navigator";
     const location = useLocation();
-    const navigate = useNavigate();
     export let icon;
     export let to: string | (() => void);
     const onClick = () => {

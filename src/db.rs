@@ -1,14 +1,15 @@
 use redis::RedisResult;
+use redisgraphio::{
+    query, AsyncGraphCommands, FromGraphValue, GraphQuery, GraphResponse, GraphStatistic,
+};
 use rocket::{
     request::{FromRequest, Outcome},
-    Request
+    Request,
 };
 use rocket_db_pools::{deadpool_redis, Connection, Database, Pool};
 use uuid::Uuid;
-use redisgraphio::{AsyncGraphCommands, query, GraphQuery, GraphResponse, FromGraphValue, GraphStatistic};
 
-
-use crate::{auth::User, types::Tweet};
+use crate::{auth::User, types::{Tweet, self}};
 
 #[derive(Database)]
 #[database("redis")]
@@ -35,13 +36,16 @@ impl<'r> FromRequest<'r> for Redis {
 
 impl Redis {
     pub async fn register_user(&mut self, user: &User<'_>) -> bool {
-        let res = self.graph_query::<()>(query!("\
+        let res = self
+            .graph_query::<()>(query!("\
             MERGE (u:User {name: $name})
             ON CREATE SET u.password = $password, u.follower = 0, u.follows = 0",
-            {
-                "name" => user.name, "password" => &user.hash_pw()
-            }
-        )).await.unwrap();
+                {
+                    "name" => user.name, "password" => &user.hash_pw()
+                }
+            ))
+            .await
+            .unwrap();
         res.get_statistic(GraphStatistic::NodesCreated) == Some(1.0)
     }
 
@@ -52,7 +56,12 @@ impl Redis {
             {
                 "name" => name
             }, true
-        )).await.unwrap().data.pop()?.0
+        ))
+        .await
+        .unwrap()
+        .data
+        .pop()?
+        .0
     }
 
     pub async fn follow(&mut self, user: &str, follow: &str) {
@@ -63,7 +72,9 @@ impl Redis {
             MERGE (u)-[:follows]->(f)
             SET f.follower = f.follower + 1, u.follows = u.follows + 1",
             {"user" => user, "follow" => follow}
-        )).await.unwrap();
+        ))
+        .await
+        .unwrap();
     }
 
     pub async fn unfollow(&mut self, user: &str, follow: &str) {
@@ -73,14 +84,16 @@ impl Redis {
             SET other.follower = other.follower - 1, you.follows = u.follows - 1
             DELETE f",
             {"user" => user, "follow" => follow}
-        )).await.unwrap();
+        ))
+        .await
+        .unwrap();
     }
 
     pub async fn tweet(&mut self, user: &str, tweet: &str) -> Tweet {
         self.graph_query::<Tweet>(query!("\
             MATCH (u:User {name: $user})
-            CREATE (u)-[:tweets]->(t:Tweet {content: $tweet, published: timestamp(), id: $id, likes: 0})
-            RETURN u, t, false, false, 0
+            CREATE (u)-[rel:tweets {published: timestamp()}]->(t:Tweet {content: $tweet, id: $id, likes: 0})
+            RETURN rel.published, u, t, null, null, false, false, 0
             ",
             {"user" => user, "tweet" => tweet, "id" => Uuid::new_v4().to_string()}
         ))
@@ -91,31 +104,35 @@ impl Redis {
         .expect("User not in db")
     }
 
-    pub async fn answer_tweet(&mut self, user: &str, answer: &str, answer_to: &str) -> bool{
-        let res = self.graph_query::<()>(query!("\
+    pub async fn answer_tweet(&mut self, user: &str, answer: &str, answer_to: &str) -> bool {
+        self.graph_query::<()>(query!("\
             MATCH (u:User {name: $user}), (t:Tweet)
             WHERE t.id = $answer_to
-            CREATE (u)-[:tweets]->(:Tweet {content: $tweet, published: timestamp(), id: $id, likes: 0})<-[:answer]-(t)",
+            CREATE (u)-[:tweets {published: timestamp()}]->(:Tweet {content: $tweet, id: $id, likes: 0})-[:answer]->(t)",
             {
-                "answer_to" => answer_to.to_string(),
-                "id" => answer_to,
-                "answer" => answer,
+                "answer_to" => answer_to,
+                "id" => Uuid::new_v4().to_string(),
+                "tweet" => answer,
                 "user" => user
             }
-        )).await.unwrap();
-        res.get_statistic(GraphStatistic::NodesCreated) == Some(1.0)
+        )).await
+        .unwrap()
+        .get_statistic(GraphStatistic::NodesCreated) == Some(1.0)
     }
 
     pub async fn retweet(&mut self, user: &str, tweetid: &str) -> bool {
         self.graph_query::<()>(query!("\
             MATCH (u:User {name: $user})
             MATCH (t:Tweet {id: $id})
-            MERGE (u)-[:retweets]->(t)",
+            MERGE (u)-[:retweets {published: timestamp()}]->(t)",
             {
                 "id" => tweetid,
                 "user" => user
             }
-        )).await.unwrap().get_statistic(GraphStatistic::RelationshipsCreated) == Some(1.0)
+        ))
+        .await
+        .unwrap()
+        .get_statistic(GraphStatistic::RelationshipsCreated) == Some(1.0)
     }
     pub async fn unretweet(&mut self, user: &str, tweetid: &str) -> bool {
         self.graph_query::<()>(query!("\
@@ -125,7 +142,10 @@ impl Redis {
                 "id" => tweetid,
                 "user" => user
             }
-        )).await.unwrap().get_statistic(GraphStatistic::RelationshipsDeleted) == Some(1.0)
+        ))
+        .await
+        .unwrap()
+        .get_statistic(GraphStatistic::RelationshipsDeleted) == Some(1.0)
     }
 
     pub async fn like(&mut self, user: &str, tweetid: &str) -> bool {
@@ -138,9 +158,12 @@ impl Redis {
                 "id" => tweetid,
                 "user" => user
             }
-        )).await.unwrap().get_statistic(GraphStatistic::RelationshipsCreated) == Some(1.0)
+        ))
+        .await
+        .unwrap()
+        .get_statistic(GraphStatistic::RelationshipsCreated) == Some(1.0)
     }
-    
+
     pub async fn unlike(&mut self, user: &str, tweetid: &str) -> bool {
         self.graph_query::<()>(query!("\
             MATCH (:User {name: $user})-[l:likes]->(t:Tweet {id: $id})
@@ -150,26 +173,32 @@ impl Redis {
                 "id" => tweetid,
                 "user" => user
             }
-        )).await.unwrap().get_statistic(GraphStatistic::RelationshipsDeleted) == Some(1.0)
+        ))
+        .await
+        .unwrap()
+        .get_statistic(GraphStatistic::RelationshipsDeleted) == Some(1.0)
     }
 
-    
     pub async fn get_answers(&mut self, id: &str, user: &str) -> Vec<Tweet> {
         self.graph_query(query!("\
-            MATCH (t:Tweet {id: $id})
+            MATCH (t:Tweet {id: $id})<-[:tweets]-(answer_to:User)
             OPTIONAL MATCH (t)<-[:answer]-(tweets:Tweet)
+            WITH *, collect(tweets) AS tweets
             UNWIND tweets AS tweet
-            MATCH (o:User)-[:tweets]->(tweet)
+            MATCH (o:User)-[rel:tweets]->(tweet)
             OPTIONAL MATCH (u:User {name: $user})
             OPTIONAL MATCH p=(u)-[:likes]->(tweet)
             OPTIONAL MATCH q=(u)-[:retweets]->(tweet)
             OPTIONAL MATCH (:Tweet)-[answers:answer]->(tweet)
-            Return o, tweet, exists(p), exists(q), count(answers)",
+            Return rel.published, o, tweet, answer_to, null, exists(p), exists(q), count(answers)",
             {
                 "id" => id,
                 "user" => user
             }, true
-        )).await.unwrap().data
+        ))
+        .await
+        .unwrap()
+        .data
     }
 
     pub async fn delete_user(&mut self, user: &str) {
@@ -179,25 +208,69 @@ impl Redis {
             {
                 "user" => user
             }
-        )).await.unwrap();
+        ))
+        .await
+        .unwrap();
     }
 
-    /// MATCH (u:User {name: "test"}) OPTIONAL MATCH (u)-[:tweets]->(yourTweets:Tweet) WHERE NOT (yourTweets)-[:answer]->(:Tweet) OPTIONAL MATCH (u)-[:follows]->(someone:User)-[:tweets]->(someTweets) WHERE NOT (someTweets)-[:answer]->(:Tweet) WITH (collect(someTweets)+collect(yourTweets)) AS alltweets UNWIND alltweets AS tweets WITH tweets AS tweets ORDER BY tweets.published DESC SKIP 0 LIMIT 25 RETURN [(u:User)-[:tweets]->(tweets) | [u, tweets]] as t
-    pub async fn get_timeline(&mut self, user: &str) -> Vec<Tweet> {
+    pub async fn get_user(&mut self, user: &str) -> Option<types::User> {
+        self.graph_query::<(types::User,)>(query!("\
+            MATCH (u:User {name: $user})
+            RETURN u",
+            {
+                "user" => user
+            }
+        ))
+        .await
+        .unwrap()
+        .data
+        .pop()
+        .map(|x| x.0)
+    }
+
+    pub async fn get_tweet(&mut self, id: &str, viewer: &str) -> Option<Tweet> {
         self.graph_query::<Tweet>(query!("\
-            MATCH (u:User {name: $name})
-            OPTIONAL MATCH (u)-[:tweets]->(yourTweets:Tweet)
-            WHERE NOT (yourTweets)-[:answer]->(:Tweet)
-            OPTIONAL MATCH (u)-[:follows]->(someone:User)-[:tweets]->(someTweets)
-            WHERE NOT (someTweets)-[:answer]->(:Tweet)
-            WITH u, (collect(someTweets)+collect(yourTweets)) AS tweets
-            Unwind tweets as tweet
-            MATCH (o:User)-[:tweets]->(tweet)
-            OPTIONAL MATCH p=(u)-[:likes]->(tweet)
-            OPTIONAL MATCH q=(u)-[:retweets]->(tweet)
+            MATCH (author:User)-[rel:tweets]->(t:Tweet {id: $id})
+            OPTIONAL MATCH (viewer:User {name: $viewer})
+            OPTIONAL MATCH (tweet)-[:answer]->(:Tweet)<-[:tweets]-(answer_to:User)
+            OPTIONAL MATCH p=(viewer)-[:likes]->(tweet)
+            OPTIONAL MATCH q=(viewer)-[:retweets]->(tweet)
             OPTIONAL MATCH (:Tweet)-[answers:answer]->(tweet)
-            Return o, tweet, exists(p), exists(q), count(answers)
-            ORDER BY tweet.published DESC SKIP $skip LIMIT 25",
+            RETURN rel.published, author, t, answer_to, null, exists(p), exists(q), count(answers)",
+            {
+                "id" => id,
+                "viewer" => viewer
+            }
+        ))
+        .await
+        .unwrap()
+        .data
+        .pop()
+    }
+
+    /// MATCH (user:User {name: "test"}) MATCH (user)-[tweetRel:tweets]->(tweet:Tweet) WITH *, { when: tweetRel.published, author: user, tweet: tweet, retweeted_by: null } AS a MATCH (user)-[tweetRel:retweets]->(tweet:Tweet)<-[:tweets]-(author:User) WITH *, { when: tweetRel.published, author: author, tweet: tweet, retweeted_by: user } AS b MATCH (user)-[:follows]->(author:User)-[tweetRel:tweets]->(tweet:Tweet) WHERE NOT (tweet)-[:answer]->() WITH *, { when: tweetRel.published, author: author, tweet: tweet, retweeted_by: user } AS c MATCH (user)-[:follows]->(retweeted_by:User)-[tweetRel:retweets]->(tweet:Tweet)<-[:tweets]-(author:User) WITH *, { when: tweetRel.published, author: author, tweet: tweet, retweeted_by: retweeted_by } AS d WITH *, (collect(a)+collect(b)+collect(c)+collect(d)) AS infos UNWIND infos AS info WITH user, info.tweet AS tweet, info.when AS when, info.author AS author, info.retweeted_by AS retweeted_by MATCH (tweet)<-[tweetRel:tweets]-() OPTIONAL MATCH (tweet)-[:answer]->(:Tweet)<-[:tweets]-(answer_to:User) OPTIONAL MATCH (tweet)<-[replies:answer]-() RETURN tweetRel.published, author, tweet, answer_to, retweeted_by, exists((user)-[:likes]->(tweet)), exists((user)-[:retweets]->(tweet)), count(replies) ORDER BY when DESC SKIP 0 LIMIT 25
+    pub async fn get_timeline(&mut self, user: &str) -> Vec<Tweet> {
+        self.graph_query(query!("\
+            MATCH (user:User {name: $name})
+            OPTIONAL MATCH (user)-[tweetRel:tweets]->(tweet:Tweet)
+            WITH user, { when: tweetRel.published, author: user, tweet: tweet, retweeted_by: null } AS a
+            OPTIONAL MATCH (user)-[tweetRel:retweets]->(tweet:Tweet)<-[:tweets]-(author:User)
+            WITH user, a, { when: tweetRel.published, author: author, tweet: tweet, retweeted_by: user } AS b
+            OPTIONAL MATCH (user)-[:follows]->(author:User)-[tweetRel:tweets]->(tweet:Tweet)
+            WHERE NOT (tweet)-[:answer]->()
+            WITH user, a, b, { when: tweetRel.published, author: author, tweet: tweet, retweeted_by: user } AS c
+            OPTIONAL MATCH (user)-[:follows]->(retweeted_by:User)-[tweetRel:retweets]->(tweet:Tweet)<-[:tweets]-(author:User)
+            WITH user, a, b, c, { when: tweetRel.published, author: author, tweet: tweet, retweeted_by: retweeted_by } AS d
+            WITH user, (collect(a)+collect(b)+collect(c)+collect(d)) AS infos
+            UNWIND infos AS info
+            WITH user, info.tweet AS tweet, info.when AS when, info.author AS author, info.retweeted_by AS retweeted_by
+            MATCH (tweet)<-[tweetRel:tweets]-()
+            OPTIONAL MATCH (tweet)-[:answer]->(:Tweet)<-[:tweets]-(answer_to:User)
+            OPTIONAL MATCH (tweet)<-[replies:answer]-()
+            OPTIONAL MATCH liked=(user)-[:likes]->(tweet)
+            OPTIONAL MATCH retweeted=(user)-[:retweets]->(tweet)
+            RETURN tweetRel.published, author, tweet, answer_to, retweeted_by, exists(liked), exists(retweeted), count(replies)
+            ORDER BY when DESC SKIP $skip LIMIT 25",
             {
                 "name" => user,
                 "skip" => 0
@@ -208,21 +281,37 @@ impl Redis {
         .data
     }
 
-    pub async fn get_user(&mut self, user: &str) -> Option<(String, Vec<Tweet>)> {
+    pub async fn get_user_tweets(&mut self, user: &str, viewer: &str) -> Vec<Tweet> {
         self.graph_query(query!("\
             MATCH (u:User {name: $user})
-            OPTIONAL MATCH (u)-[:tweets]->(t:Tweet)
-            WHERE NOT (t)-[:answer]->(:Tweet)
-            WITH u, t ORDER BY t.published DESC LIMIT 10
-            RETURN u.name, t AS tweets",
+            OPTIONAL MATCH (u)-[rel:tweets]-(t:Tweet)
+            WITH u, {when: rel.published, author: u, tweet: t, retweeted_by: null} AS a
+            OPTIONAL MATCH (u)-[rel:retweets]->(someRetweets)<-[:tweets]-(author:User)
+            WITH u, a, {when: rel.published, author: author, tweet: someRetweets, retweeted_by: u} AS b
+            WITH u, (collect(a)+collect(b)) AS infos
+            UNWIND infos AS info
+            WITH u, info.tweet AS tweet, info.author AS author, info.retweeted_by AS retweeted_by, info.when as when
+            MATCH (tweet)<-[tweetRel:tweets]-()
+            OPTIONAL MATCH (viewer:User {name: $viewer})
+            OPTIONAL MATCH (tweet)-[:answer]->(:Tweet)<-[:tweets]-(answer_to:User)
+            OPTIONAL MATCH p=(viewer)-[:likes]->(tweet)
+            OPTIONAL MATCH q=(viewer)-[:retweets]->(tweet)
+            OPTIONAL MATCH (:Tweet)-[answers:answer]->(tweet)
+            Return tweetRel.published, author, tweet, answer_to, retweeted_by, exists(p), exists(q), count(answers)
+            ORDER BY when DESC SKIP $skip LIMIT 25",
             {
-                "user" => user        
+                "user" => user,
+                "viewer" => viewer,
+                "skip" => 0
             }, true
-        )).await.ok()?.data.pop()
+        )).await.unwrap().data
     }
 
     #[inline]
-    pub async fn graph_query<RT: FromGraphValue>(&mut self, query: GraphQuery) -> RedisResult<GraphResponse<RT>> {
+    pub async fn graph_query<RT: FromGraphValue>(
+        &mut self,
+        query: GraphQuery,
+    ) -> RedisResult<GraphResponse<RT>> {
         self.connection.graph_query("social", query).await
     }
 }

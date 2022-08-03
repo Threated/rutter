@@ -1,11 +1,10 @@
 <script lang="ts">
     import { isAuthenticated } from "../store";
-    import { useNavigate } from "svelte-navigator";
+    import { navigate } from "svelte-navigator";
     import SendTweet from "./SendTweet.svelte";
     import Tweet from "./Tweet.svelte";
     import type { Tweet as TweetT } from "../types";
     import { auth_fetch } from "../main";
-    const navigate = useNavigate();
     $: if (!$isAuthenticated) {
         // Replace with cool shit https://svelte.dev/repl/033e824fad0a4e34907666e7196caec4?version=3.48.0
         navigate("/login");
@@ -30,7 +29,7 @@
 
 <main>
     <div>
-        <h1>Rutter</h1>
+        <h1>New Tweets</h1>
         <SendTweet on:tweet={(event) => {tweets = [event.detail.tweet, ...tweets]}} />
     </div>
 {#await timeline()}

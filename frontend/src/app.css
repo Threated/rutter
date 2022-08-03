@@ -5,6 +5,8 @@
   font-weight: 400;
   --color-background: black;
   --color-blue: #1d9bf0;
+  --color-green: rgb(0, 208, 42);
+  --color-red: rgb(206, 74, 74);
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background-color: var(--color-background);

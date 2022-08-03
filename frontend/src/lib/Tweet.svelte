@@ -1,12 +1,15 @@
 <script lang="ts">
-    import type { Tweet } from "src/types";
+    import type { Tweet, User } from "src/types";
     import RetweetIcon from "../assets/ion-icons/retweet.svg";
     import LikesIcon from "../assets/ion-icons/likes.svg";
     import ShareIcon from "../assets/ion-icons/share.svg";
     import AnswersIcon from "../assets/ion-icons/answers.svg";
     import { auth_fetch } from "../main";
-import { getContext } from "svelte";
-import Answer from "./Answer.svelte";
+    import { getContext } from "svelte";
+    import Answer from "./Answer.svelte";
+    import { navigate } from "svelte-navigator";
+    import { viewedTweet, viewedUser } from "../store";
+    import { hoverUser } from "../util";
     export let tweet: Tweet;
     export const iconWidth = "1.7rem";
     const formatDate = (date: number) => {
@@ -32,7 +35,6 @@ import Answer from "./Answer.svelte";
         });
         if (res.ok) {
             let json = await res.json()
-            console.log(json)
             tweet.liked = json.success;
             if (json.success) {
                 tweet.likes++;
@@ -45,7 +47,6 @@ import Answer from "./Answer.svelte";
         });
         if (res.ok) {
             let json = await res.json()
-            console.log(json)
             tweet.liked = !json.success
             if (json.success) {
                 tweet.likes--;
@@ -72,46 +73,76 @@ import Answer from "./Answer.svelte";
             tweet.retweeted = !json.success
         }
     }
+    const visitUser = (user: User) => {
+        viewedUser.set(user);
+        navigate(`/u/${user.name}`);
+    }
     const { open } = getContext("answer");
 </script>
 
-<div class="tweet">
-    <div class="head">
-        <h3>{tweet.author.name}</h3>
-        <span>
-            {"@" + tweet.author.name + " · " + formatDate(tweet.published)}
+<article class="tweet" on:click={() => {viewedTweet.set(tweet); navigate(`/t/${tweet.id}`);}}>
+    <div class="head" on:click|stopPropagation={() => visitUser(tweet.author)}>
+        <span class="link" use:hoverUser={tweet.author}>
+            <h3>{tweet.author.name}</h3>
+            <span class="gray">
+                {"@" + tweet.author.name + " · " + formatDate(tweet.published)}
+            </span>
         </span>
     </div>
+    {#if tweet.answer_to}
+        <div>
+            <span class="gray">
+                Answer to 
+                <span class="link blue" on:click|stopPropagation={() => visitUser(tweet.answer_to)} use:hoverUser={tweet.answer_to} >
+                    @{tweet.answer_to.name}
+                </span>
+            </span>
+        </div>
+    {/if}
     <p>{tweet.content}</p>
     <div class="icons">
-        <div class="icon answer" on:click={() => open(Answer, {tweet})}>
+        <div class="icon answer" on:click|stopPropagation={() => open(Answer, {tweet})}>
             <AnswersIcon width={iconWidth} />
             {tweet.replies > 0 ? tweet.replies : ""}
         </div>
-        <div class="icon retweet" class:retweeted="{tweet.retweeted}" on:click={tweet.retweeted ? unretweet : retweet}>
+        <div class="icon retweet" class:retweeted="{tweet.retweeted}" on:click|stopPropagation={tweet.retweeted ? unretweet : retweet}>
             <RetweetIcon width={iconWidth} />
         </div>
-        <div class="icon likes" class:liked="{tweet.liked}" on:click={tweet.liked ? unlike : like}>
+        <div class="icon likes" class:liked="{tweet.liked}" on:click|stopPropagation={tweet.liked ? unlike : like}>
             <LikesIcon width={iconWidth} />
-            {tweet.likes}
+            {tweet.likes > 0 ? tweet.likes : ""}
         </div>
         <div class="icon share">
             <ShareIcon width={iconWidth} />
         </div>
     </div>
-</div>
+</article>
 
 <style>
     .tweet {
         padding: 0.8rem 4rem;
         border-bottom: 1px solid gray;
     }
+    .tweet:hover {
+		background-color: rgba(91, 112, 131, 0.1);
+    }
     .head {
         display: flex;
     }
-    span {
+    .gray {
         color: gray;
         margin-left: 3px;
+    }
+    .blue {
+        color: var(--color-blue);
+    }
+    .link {
+        display: inline-flex;
+        position: relative;
+        justify-content: center;
+    }
+    .link:hover {
+        text-decoration: underline;
     }
     .icons {
         display: flex;
@@ -124,22 +155,25 @@ import Answer from "./Answer.svelte";
         color: gray;
         align-items: center;
     }
-    .liked {
-        fill: rgb(206, 74, 74);
-        color: rgb(206, 74, 74);
-    }
-    .retweeted {
-        color: rgb(0, 208, 42);
-    }
     .answer:hover,
     .share:hover {
         color: var(--color-blue);
     }
+    .likes {
+        fill: transparent;
+    }
     .likes:hover {
-        color: rgb(206, 74, 74);
+        color: var(--color-red);
     }
     .retweet:hover {
-        color: rgb(0, 208, 42);
+        color: var(--color-green);
+    }
+    .retweeted {
+        color: var(--color-green);
+    }
+    .liked {
+        fill: var(--color-red);
+        color: var(--color-red);
     }
     p {
         white-space: pre-wrap;

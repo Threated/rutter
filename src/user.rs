@@ -1,4 +1,4 @@
-use crate::{auth::Authenticated, db::Redis, responders::JsonRes, types::Tweet};
+use crate::{auth::Authenticated, db::Redis, responders::JsonRes, types::{Tweet, self}};
 use rocket::{
     http::Status,
     serde::{
@@ -77,27 +77,72 @@ async fn answer(tweet: Json<TweetInfo>, user: Authenticated, mut db: Redis) -> J
             "Answer requires id of root tweet",
         ));
     }
-    if db.answer_tweet(&user.name, &tweet.content, tweet.id.as_ref().unwrap()).await {
+    if db
+        .answer_tweet(&user.name, &tweet.content, tweet.id.as_ref().unwrap())
+        .await
+    {
         JsonRes::from(format!("{} tweeted {}", user.name, tweet.content))
     } else {
         JsonRes::from((Status::NotFound, "The tweet answered does not exist"))
     }
 }
 
-#[get("/answers?<id>", format = "json", rank=1)]
+#[get("/answers?<id>", format = "json", rank = 1)]
 async fn answers(id: &str, user: Authenticated, mut db: Redis) -> JsonRes<Vec<Tweet>> {
     JsonRes((Status::Ok, Json(db.get_answers(id, &user.name).await)))
 }
 
-#[get("/answers?<id>", format = "json", rank=2)]
+#[get("/answers?<id>", format = "json", rank = 2)]
 async fn answers_no_auth(id: &str, mut db: Redis) -> JsonRes<Vec<Tweet>> {
     JsonRes((Status::Ok, Json(db.get_answers(id, &"").await)))
 }
 
+#[get("/tweets/<user>", format = "json", rank = 1)]
+async fn user(user: &str, viewer: Authenticated, mut db: Redis) -> JsonRes<Vec<Tweet>> {
+    JsonRes((
+        Status::Ok,
+        Json(db.get_user_tweets(user, &viewer.name).await),
+    ))
+}
+
+#[get("/tweets/<user>", format = "json", rank = 2)]
+async fn user_no_auth(user: &str, mut db: Redis) -> JsonRes<Vec<Tweet>> {
+    JsonRes((Status::Ok, Json(db.get_user_tweets(user, &"").await)))
+}
 
 #[get("/timeline", format = "json")]
 async fn timeline(user: Authenticated, mut db: Redis) -> JsonRes<Vec<Tweet>> {
     JsonRes((Status::Ok, Json(db.get_timeline(&user.name).await)))
+}
+
+#[get("/info/<username>", format = "json")]
+async fn info(username: &str, mut db: Redis) -> JsonRes<types::User> {
+    let user = db.get_user(username).await;
+    if let Some(user) = user {
+        JsonRes((Status::Ok, Json(user)))
+    } else {
+        JsonRes((Status::NotFound, Json(types::User::default())))
+    }
+}
+
+#[get("/tweet?<id>", format = "json", rank = 2)]
+async fn get_tweet(id: &str, mut db: Redis) -> JsonRes<Tweet> {
+    let tweet = db.get_tweet(id, "").await;
+    if let Some(tweet) = tweet {
+        JsonRes((Status::Ok, Json(tweet)))
+    } else {
+        JsonRes((Status::NotFound, Json(Tweet::default())))
+    }
+}
+
+#[get("/tweet?<id>", format = "json", rank = 1)]
+async fn get_tweet_auth(id: &str, user: Authenticated, mut db: Redis) -> JsonRes<Tweet> {
+    let tweet = db.get_tweet(id, &user.name).await;
+    if let Some(tweet) = tweet {
+        JsonRes((Status::Ok, Json(tweet)))
+    } else {
+        JsonRes((Status::NotFound, Json(Tweet::default())))
+    }
 }
 
 #[delete("/", format = "json")]
@@ -107,5 +152,23 @@ async fn delete(user: Authenticated, mut db: Redis) -> JsonRes {
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-    routes![follow, unfollow, tweet, answer, delete, timeline, like, unlike, retweet, unretweet, answers, answers_no_auth]
+    routes![
+        follow,
+        unfollow,
+        tweet,
+        answer,
+        delete,
+        timeline,
+        like,
+        unlike,
+        retweet,
+        unretweet,
+        answers,
+        answers_no_auth,
+        user,
+        user_no_auth,
+        info,
+        get_tweet,
+        get_tweet_auth
+    ]
 }

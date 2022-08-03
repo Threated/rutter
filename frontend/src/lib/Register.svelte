@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { useNavigate } from "svelte-navigator";
-    const navigate = useNavigate();
-    import { isAuthenticated } from "../store";
+    import { navigate } from "svelte-navigator";
     import Input from "./Input.svelte";
     let name: string;
     let password: string;
