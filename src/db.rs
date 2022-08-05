@@ -213,30 +213,32 @@ impl Redis {
         .unwrap();
     }
 
-    pub async fn get_user(&mut self, user: &str) -> Option<types::User> {
-        self.graph_query::<(types::User,)>(query!("\
-            MATCH (u:User {name: $user})
-            RETURN u",
+    pub async fn get_user(&mut self, user: &str, viewer: &str) -> Option<(types::User, bool)> {
+    self.graph_query(query!("\
+        MATCH (u:User {name: $user})
+            OPTIONAL MATCH (viewer:User {name: $viewer})
+            OPTIONAL MATCH p=(viewer)-[:follows]->(u)
+            RETURN u, exists(p)",
             {
-                "user" => user
+                "user" => user,
+                "viewer" => viewer
             }
         ))
         .await
         .unwrap()
         .data
         .pop()
-        .map(|x| x.0)
     }
 
     pub async fn get_tweet(&mut self, id: &str, viewer: &str) -> Option<Tweet> {
-        self.graph_query::<Tweet>(query!("\
-            MATCH (author:User)-[rel:tweets]->(t:Tweet {id: $id})
+        self.graph_query(query!("\
+            MATCH (author:User)-[rel:tweets]->(tweet:Tweet {id: $id})
             OPTIONAL MATCH (viewer:User {name: $viewer})
             OPTIONAL MATCH (tweet)-[:answer]->(:Tweet)<-[:tweets]-(answer_to:User)
             OPTIONAL MATCH p=(viewer)-[:likes]->(tweet)
             OPTIONAL MATCH q=(viewer)-[:retweets]->(tweet)
             OPTIONAL MATCH (:Tweet)-[answers:answer]->(tweet)
-            RETURN rel.published, author, t, answer_to, null, exists(p), exists(q), count(answers)",
+            RETURN rel.published, author, tweet, answer_to, null, exists(p), exists(q), count(answers)",
             {
                 "id" => id,
                 "viewer" => viewer

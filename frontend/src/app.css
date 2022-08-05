@@ -7,13 +7,10 @@
   --color-blue: #1d9bf0;
   --color-green: rgb(0, 208, 42);
   --color-red: rgb(206, 74, 74);
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  --color-white: rgba(255, 255, 255, 0.87);
+  color: var(--color-white);
   background-color: var(--color-background);
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 }
@@ -25,15 +22,10 @@ body {
     margin: 0;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+button {
+    color: unset;
+}
+
+textarea {
+    color: unset;
 }

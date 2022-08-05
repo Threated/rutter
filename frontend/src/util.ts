@@ -17,6 +17,13 @@ export function hoverUser(element: HTMLElement, user: User) {
             isHovered: false
         })
     })
+    return {
+        update(params: User) {
+            hoverUser.$set({
+                user: params
+            })
+        }
+    }
 }
 
 export function readCookie(name: string): string | null {

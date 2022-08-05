@@ -23,11 +23,8 @@
         }
     };
     const getTweet = async (id: string) => {
-        let res = await fetch(`http://localhost:8000/user/tweet/?id=${id}`, {
+        let res = await auth_fetch(`http://localhost:8000/user/tweet/?id=${id}`, {
             method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
         });
         if (res.ok) {
             tweet.set(await res.json());
@@ -56,9 +53,10 @@
     {#if notFound}
         <h1>Can not find with id {$tweet.id}</h1>
     {:else}
-        <Tweet tweet={$tweet} />
+        <Tweet tweet={$tweet} padding="2rem" />
     {/if}
 </div>
+<hr>
 {#await userReplies()}
     <h3>Loading tweets...</h3>
 {:then}
@@ -68,6 +66,8 @@
 {/await}
 
 <style>
-    .currentTweet {
+    hr {
+        margin: 0;
+        border: 1px solid gray;
     }
 </style>

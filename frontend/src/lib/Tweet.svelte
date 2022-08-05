@@ -11,7 +11,8 @@
     import { viewedTweet, viewedUser } from "../store";
     import { hoverUser } from "../util";
     export let tweet: Tweet;
-    export const iconWidth = "1.7rem";
+    export let iconWidth = "1.7rem";
+    export let padding = "4rem";
     const formatDate = (date: number) => {
         let seconds = (new Date().getTime() - new Date(date).getTime()) / 1000;
         let minutes = seconds / 60;
@@ -94,11 +95,24 @@
 
 <article
     class="tweet"
+    style="--padding: {padding};"
     on:click={() => {
         viewedTweet.set(tweet);
         navigate(`/t/${tweet.id}`);
     }}
 >
+    {#if tweet.retweet_by}
+        <div class="retweetby">
+            <RetweetIcon width="1rem" />
+            <span
+                class="gray link"
+                on:click={() => visitUser(tweet.retweet_by)}
+                use:hoverUser={tweet.retweet_by}
+            >
+                Retweeted by {tweet.retweet_by.name}
+            </span>
+        </div>
+    {/if}
     <div class="head" on:click|stopPropagation={() => visitUser(tweet.author)}>
         <span class="link" use:hoverUser={tweet.author}>
             <h3>{tweet.author.name}</h3>
@@ -152,8 +166,14 @@
 </article>
 
 <style>
+    .retweetby {
+        display: flex;
+    }
+    .retweetby span:hover {
+        text-decoration: underline;
+    }
     .tweet {
-        padding: 0.8rem 4rem;
+        padding: 0.8rem var(--padding);
         border-bottom: 1px solid gray;
     }
     .tweet:hover {

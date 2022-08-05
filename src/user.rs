@@ -8,27 +8,23 @@ use rocket::{
 };
 
 #[derive(Deserialize)]
-struct Follow {
-    user: String,
-}
-
-#[derive(Deserialize)]
 pub struct TweetInfo {
     pub content: String,
     pub id: Option<String>,
 }
 
-#[post("/follow", format = "json", data = "<follow>")]
-async fn follow(follow: Json<Follow>, user: Authenticated, mut db: Redis) -> JsonRes {
-    let follow = &*follow.user;
-    db.follow(&user.name, follow).await;
+#[post("/follow/<follow>", format = "json")]
+async fn follow(follow: String, user: Authenticated, mut db: Redis) -> JsonRes {
+    if follow == user.name {
+        return JsonRes::from((Status::UnprocessableEntity, "Cant follow yourself"))
+    }
+    db.follow(&user.name, &follow).await;
     JsonRes::from(format!("{} followed {}", user.name, follow))
 }
 
-#[post("/unfollow", format = "json", data = "<unfollow>")]
-async fn unfollow(unfollow: Json<Follow>, user: Authenticated, mut db: Redis) -> JsonRes {
-    let unfollow = &*unfollow.user;
-    db.unfollow(&user.name, unfollow).await;
+#[post("/unfollow/<unfollow>", format = "json")]
+async fn unfollow(unfollow: String, user: Authenticated, mut db: Redis) -> JsonRes {
+    db.unfollow(&user.name, &unfollow).await;
     JsonRes::from(format!("{} unfollowed {}", user.name, unfollow))
 }
 
@@ -115,13 +111,23 @@ async fn timeline(user: Authenticated, mut db: Redis) -> JsonRes<Vec<Tweet>> {
     JsonRes((Status::Ok, Json(db.get_timeline(&user.name).await)))
 }
 
-#[get("/info/<username>", format = "json")]
-async fn info(username: &str, mut db: Redis) -> JsonRes<types::User> {
-    let user = db.get_user(username).await;
+#[get("/info/<username>", format = "json", rank=2)]
+async fn info(username: &str, mut db: Redis) -> JsonRes<(types::User, bool)> {
+    let user = db.get_user(username, "").await;
     if let Some(user) = user {
         JsonRes((Status::Ok, Json(user)))
     } else {
-        JsonRes((Status::NotFound, Json(types::User::default())))
+        JsonRes((Status::NotFound, Json((types::User::default(), false))))
+    }
+}
+
+#[get("/info/<username>", format = "json", rank=1)]
+async fn info_auth(username: &str, viewer: Authenticated, mut db: Redis) -> JsonRes<(types::User, bool)> {
+    let user = db.get_user(username, &viewer.name).await;
+    if let Some(user) = user {
+        JsonRes((Status::Ok, Json(user)))
+    } else {
+        JsonRes((Status::NotFound, Json((types::User::default(), false))))
     }
 }
 
@@ -168,7 +174,8 @@ pub fn routes() -> Vec<rocket::Route> {
         user,
         user_no_auth,
         info,
+        info_auth,
         get_tweet,
-        get_tweet_auth
+        get_tweet_auth,
     ]
 }
