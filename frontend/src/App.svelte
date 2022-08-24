@@ -6,6 +6,7 @@
     import Navbar from "./lib/Navbar.svelte";
     import Register from "./lib/Register.svelte";
     import Replies from "./lib/Replies.svelte";
+    import Search from "./lib/Search.svelte";
     import User from "./lib/User.svelte";
 </script>
 
@@ -20,6 +21,7 @@
                 <Route path="u/:user" component={User} />
                 <Route path="t/:id" component={Replies} />
                 <Route path="login" component={Login} />
+                <Route path="search" component={Search} />
                 <Route path="signup" component={Register} />
             </div>
         </main>

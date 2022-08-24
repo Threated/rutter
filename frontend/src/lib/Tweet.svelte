@@ -4,11 +4,11 @@
     import LikesIcon from "../assets/ion-icons/likes.svg";
     import ShareIcon from "../assets/ion-icons/share.svg";
     import AnswersIcon from "../assets/ion-icons/answers.svg";
-    import { auth_fetch } from "../util";
+    import { auth_fetch, visitUser } from "../util";
     import { getContext } from "svelte";
     import Answer from "./Answer.svelte";
     import { navigate } from "svelte-navigator";
-    import { viewedTweet, viewedUser } from "../store";
+    import { viewedTweet } from "../store";
     import { hoverUser } from "../util";
     export let tweet: Tweet;
     export let iconWidth = "1.7rem";
@@ -85,10 +85,6 @@
             console.log(json);
             tweet.retweeted = !json.success;
         }
-    };
-    const visitUser = (user: User) => {
-        viewedUser.set(user);
-        navigate(`/u/${user.name}`);
     };
     const { open } = getContext("answer");
 </script>

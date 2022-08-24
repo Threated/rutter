@@ -56,7 +56,7 @@
         <Tweet tweet={$tweet} padding="2rem" />
     {/if}
 </div>
-<hr>
+<hr />
 {#await userReplies()}
     <h3>Loading tweets...</h3>
 {:then}
@@ -68,6 +68,6 @@
 <style>
     hr {
         margin: 0;
-        border: 1px solid gray;
+        background: gray;
     }
 </style>

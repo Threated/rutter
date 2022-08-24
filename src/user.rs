@@ -151,6 +151,14 @@ async fn get_tweet_auth(id: &str, user: Authenticated, mut db: Redis) -> JsonRes
     }
 }
 
+#[get("/?<query>", format = "json")]
+async fn search(query: &str, mut db: Redis) -> JsonRes<Vec<types::User>> {
+    if query.is_empty() {
+        return JsonRes((Status::Ok, Json(vec![])));
+    }
+    JsonRes((Status::Ok, Json(db.search_user(query).await)))
+}
+
 #[delete("/", format = "json")]
 async fn delete(user: Authenticated, mut db: Redis) -> JsonRes {
     db.delete_user(&user.name).await;
@@ -177,5 +185,6 @@ pub fn routes() -> Vec<rocket::Route> {
         info_auth,
         get_tweet,
         get_tweet_auth,
+        search
     ]
 }

@@ -1,6 +1,8 @@
 import type { User } from "./types";
 import UserHover from "./lib/UserHover.svelte";
 import type { SvelteComponent } from "svelte";
+import { viewedUser } from "./store";
+import { navigate } from "svelte-navigator";
 
 export function hoverUser(element: HTMLElement, user: User) {
     let hoverUser: SvelteComponent = new UserHover({
@@ -44,4 +46,9 @@ export function auth_fetch(url: string, options: RequestInit) {
         ...options.headers
     };
     return fetch(url, options)
+}
+
+export function visitUser(user: User) {
+    viewedUser.set(user);
+    navigate(`/u/${user.name}`);
 }

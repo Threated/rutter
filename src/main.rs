@@ -5,12 +5,15 @@ mod responders;
 mod types;
 mod user;
 
-use rocket::fs::FileServer;
+use rocket::{fs::FileServer, fairing::AdHoc};
 use rocket_cors::AllowedOrigins;
 use rocket_db_pools::Database;
 #[macro_use] extern crate rocket;
 
 
+// TODO: Just use RedisLabs/redisgraph docker image
+// Impl actual search
+// Just sort matches by follows
 
 #[launch]
 fn rocket() -> _ {
@@ -22,6 +25,7 @@ fn rocket() -> _ {
 
     rocket::build()
         .attach(db::Db::init())
+        .attach(AdHoc::try_on_ignite("DB Migrations", db::db_migrations))
         .attach(cors)
         .mount("/", FileServer::from("static/"))
         .mount("/auth", auth::routes())

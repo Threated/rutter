@@ -4,7 +4,7 @@ use redisgraphio::{
 };
 use rocket::{
     request::{FromRequest, Outcome},
-    Request,
+    Request, Build, fairing, Rocket
 };
 use rocket_db_pools::{deadpool_redis, Connection, Database, Pool};
 use uuid::Uuid;
@@ -31,6 +31,28 @@ impl<'r> FromRequest<'r> for Redis {
             Outcome::Failure(x) => Outcome::Failure(x),
             Outcome::Forward(x) => Outcome::Forward(x),
         }
+    }
+}
+
+pub async fn db_migrations(rocket: Rocket<Build>) -> fairing::Result {
+    if let Some(db) = Db::fetch(&rocket) {
+        let connection = &mut db.0
+            .get()
+            .await
+            .expect("Unable to get db connection");
+        // Create search idx on username
+        connection.graph_query_void(
+            "social",
+            query!("CALL db.idx.fulltext.createNodeIndex('User', 'name')")
+        ).await.expect("Fulltext index error");
+        // Create exact match index on username
+        connection.graph_query_void(
+            "social",
+            query!("CREATE INDEX ON :User(name)")
+        ).await.expect("Normal index error");
+        Ok(rocket)
+    } else {
+        Err(rocket)
     }
 }
 
@@ -214,20 +236,39 @@ impl Redis {
     }
 
     pub async fn get_user(&mut self, user: &str, viewer: &str) -> Option<(types::User, bool)> {
-    self.graph_query(query!("\
-        MATCH (u:User {name: $user})
-            OPTIONAL MATCH (viewer:User {name: $viewer})
-            OPTIONAL MATCH p=(viewer)-[:follows]->(u)
-            RETURN u, exists(p)",
+        self.graph_query(query!("\
+            MATCH (u:User {name: $user})
+                OPTIONAL MATCH (viewer:User {name: $viewer})
+                OPTIONAL MATCH p=(viewer)-[:follows]->(u)
+                RETURN u, exists(p)",
+                {
+                    "user" => user,
+                    "viewer" => viewer
+                }
+            ))
+            .await
+            .unwrap()
+            .data
+            .pop()
+    }
+
+    pub async fn search_user(&mut self, query: &str) -> Vec<types::User> {
+        self.graph_query(query!("\
+            CALL db.idx.fulltext.queryNodes('User', $query)
+            YIELD node
+            RETURN node
+            ORDER BY node.follower
+            LIMIT 10",
             {
-                "user" => user,
-                "viewer" => viewer
+                "query" => format!("{query}*")
             }
         ))
         .await
         .unwrap()
         .data
-        .pop()
+        .into_iter()
+        .map(|(user,)| user)
+        .collect()
     }
 
     pub async fn get_tweet(&mut self, id: &str, viewer: &str) -> Option<Tweet> {
@@ -250,7 +291,6 @@ impl Redis {
         .pop()
     }
 
-    /// MATCH (user:User {name: "test"}) MATCH (user)-[tweetRel:tweets]->(tweet:Tweet) WITH *, { when: tweetRel.published, author: user, tweet: tweet, retweeted_by: null } AS a MATCH (user)-[tweetRel:retweets]->(tweet:Tweet)<-[:tweets]-(author:User) WITH *, { when: tweetRel.published, author: author, tweet: tweet, retweeted_by: user } AS b MATCH (user)-[:follows]->(author:User)-[tweetRel:tweets]->(tweet:Tweet) WHERE NOT (tweet)-[:answer]->() WITH *, { when: tweetRel.published, author: author, tweet: tweet, retweeted_by: user } AS c MATCH (user)-[:follows]->(retweeted_by:User)-[tweetRel:retweets]->(tweet:Tweet)<-[:tweets]-(author:User) WITH *, { when: tweetRel.published, author: author, tweet: tweet, retweeted_by: retweeted_by } AS d WITH *, (collect(a)+collect(b)+collect(c)+collect(d)) AS infos UNWIND infos AS info WITH user, info.tweet AS tweet, info.when AS when, info.author AS author, info.retweeted_by AS retweeted_by MATCH (tweet)<-[tweetRel:tweets]-() OPTIONAL MATCH (tweet)-[:answer]->(:Tweet)<-[:tweets]-(answer_to:User) OPTIONAL MATCH (tweet)<-[replies:answer]-() RETURN tweetRel.published, author, tweet, answer_to, retweeted_by, exists((user)-[:likes]->(tweet)), exists((user)-[:retweets]->(tweet)), count(replies) ORDER BY when DESC SKIP 0 LIMIT 25
     pub async fn get_timeline(&mut self, user: &str) -> Vec<Tweet> {
         self.graph_query(query!("\
             MATCH (user:User {name: $name})
