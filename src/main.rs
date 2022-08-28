@@ -12,8 +12,6 @@ use rocket_db_pools::Database;
 
 
 // TODO: Just use RedisLabs/redisgraph docker image
-// Impl actual search
-// Just sort matches by follows
 
 #[launch]
 fn rocket() -> _ {
