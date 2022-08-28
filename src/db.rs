@@ -115,7 +115,7 @@ impl Redis {
         self.graph_query::<Tweet>(query!("\
             MATCH (u:User {name: $user})
             CREATE (u)-[rel:tweets {published: timestamp()}]->(t:Tweet {content: $tweet, id: $id, likes: 0})
-            RETURN rel.published, u, t, null, null, false, false, 0
+            RETURN rel.published, u, t, null, null as dummy, false, false as dummy2, 0
             ",
             {"user" => user, "tweet" => tweet, "id" => Uuid::new_v4().to_string()}
         ))
