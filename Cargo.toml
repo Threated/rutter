@@ -15,4 +15,5 @@ uuid = { version = "0.8", features = ["v4"] }
 jsonwebtoken = "8"
 chrono = "0.4"
 redisgraphio = { version = "0.2", features=["tokio-comp"] }
-rocket_cors = { version = "0.6.0-alpha1", default-features = false }
+# rocket_cors = { version = "0.6.0-alpha1", default-features = false }
+rocket_cors = { git = "https://github.com/lawliet89/rocket_cors", branch = "master",  default-features = false  }

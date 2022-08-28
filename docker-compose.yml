@@ -1,9 +1,10 @@
 version: '3.8'
 services:
   redis:
-    build:
-      context: .
-      dockerfile: ./Dockerfiles/redis.dockerfile
+    image: redislabs/redisgraph
+  web:
+    build: .
+    depends_on:
+      - redis
     ports:
-      - 6379:6379
-    
+      - "8000:8000"

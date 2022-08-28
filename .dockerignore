@@ -1,0 +1,8 @@
+/target
+todo.txt
+db.txt
+test.rest
+/Dockerfiles
+/run
+/frontend/node_modules
+/static
