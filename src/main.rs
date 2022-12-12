@@ -5,13 +5,17 @@ mod responders;
 mod types;
 mod user;
 
-use rocket::{fs::FileServer, fairing::AdHoc};
+use rocket::{fs::FileServer, fs::NamedFile, fairing::AdHoc};
 use rocket_cors::AllowedOrigins;
 use rocket_db_pools::Database;
 #[macro_use] extern crate rocket;
 
 
-// TODO: Just use RedisLabs/redisgraph docker image
+/// Redirect everything to index.html and let the 
+#[get("/<_..>", rank=11)]
+async fn redirect() -> Option<NamedFile> {
+    NamedFile::open("static/index.html").await.ok()
+}
 
 #[launch]
 fn rocket() -> _ {
@@ -20,12 +24,13 @@ fn rocket() -> _ {
         allow_credentials: true,
         ..Default::default()
     }.to_cors().unwrap();
-
+    
     rocket::build()
         .attach(db::Db::init())
         .attach(AdHoc::try_on_ignite("DB Migrations", db::db_migrations))
         .attach(cors)
         .mount("/", FileServer::from("static/"))
+        .mount("/", routes![redirect])
         .mount("/auth", auth::routes())
         .mount("/user", user::routes())
 }

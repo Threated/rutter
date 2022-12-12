@@ -52,7 +52,6 @@
     <p class="error">Error ❌ {errorMsg}</p>
     {/if}
     <p>
-        Don't have an account?
         <button class="form-field" on:click={() => navigate("/signup")}> Sign-up </button>
     </p>
 </div>
